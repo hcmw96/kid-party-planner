@@ -48,6 +48,10 @@ const Login = () => {
     >
       <div className="absolute inset-0 bg-background/60" />
       <div className="w-full max-w-sm space-y-8 relative z-10">
+        {/* Logo */}
+        <div className="text-center">
+          <span className="text-2xl font-serif font-bold tracking-wide text-foreground">PartyPal</span>
+        </div>
         {/* Header */}
         <div className="text-center">
           <h1 className="text-3xl font-serif italic text-foreground">
