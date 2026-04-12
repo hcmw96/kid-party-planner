@@ -15,17 +15,17 @@ interface Props {
 
 const StepTwo = ({ formData, updateField, onBack, onNext, submitting }: Props) => {
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <div>
-        <h2 className="text-2xl font-bold text-foreground">Group gift 🎁</h2>
-        <p className="text-muted-foreground mt-1">Let parents chip in together</p>
+        <h2 className="text-2xl font-semibold text-foreground font-serif">Group gift</h2>
+        <p className="text-muted-foreground mt-2 text-sm">Let parents chip in together</p>
       </div>
 
-      <div className="p-5 rounded-2xl bg-card border space-y-5">
+      <div className="p-6 rounded-lg bg-card shadow-sm space-y-5">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Gift className="h-5 w-5 text-primary" />
-            <Label htmlFor="giftToggle" className="text-base font-medium">Enable group gift</Label>
+            <Gift className="h-5 w-5 text-primary" strokeWidth={1.5} />
+            <Label htmlFor="giftToggle" className="text-sm font-medium">Enable group gift</Label>
           </div>
           <Switch
             id="giftToggle"
@@ -54,7 +54,7 @@ const StepTwo = ({ formData, updateField, onBack, onNext, submitting }: Props) =
           Back
         </Button>
         <Button onClick={onNext} disabled={submitting} className="flex-1" size="lg">
-          {submitting ? "Creating..." : "Create party 🎉"}
+          {submitting ? "Creating..." : "Create party"}
         </Button>
       </div>
     </div>

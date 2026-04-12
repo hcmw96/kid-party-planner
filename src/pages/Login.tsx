@@ -5,7 +5,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/hooks/useAuth";
-import { PartyPopper } from "lucide-react";
 import { toast } from "sonner";
 
 const Login = () => {
@@ -24,7 +23,7 @@ const Login = () => {
       if (isSignUp) {
         const { error } = await signUp(email, password);
         if (error) throw error;
-        toast.success("Account created! Check your email to confirm.");
+        toast.success("Account created. Check your email to confirm.");
       } else {
         const { error } = await signIn(email, password);
         if (error) throw error;
@@ -38,13 +37,10 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-6">
+    <div className="min-h-screen flex items-center justify-center px-6 animate-fade-in">
       <Card className="w-full max-w-sm">
         <CardHeader className="text-center">
-          <div className="flex justify-center mb-2">
-            <PartyPopper className="h-8 w-8 text-primary" />
-          </div>
-          <CardTitle className="text-2xl">{isSignUp ? "Create account" : "Welcome back"}</CardTitle>
+          <CardTitle className="text-2xl font-serif">{isSignUp ? "Create account" : "Welcome back"}</CardTitle>
           <CardDescription>
             {isSignUp ? "Sign up to start organising" : "Log in to manage your parties"}
           </CardDescription>
@@ -78,11 +74,11 @@ const Login = () => {
               {loading ? "Loading..." : isSignUp ? "Sign up" : "Log in"}
             </Button>
           </form>
-          <div className="mt-4 text-center text-sm text-muted-foreground">
+          <div className="mt-6 text-center text-sm text-muted-foreground">
             {isSignUp ? "Already have an account?" : "Don't have an account?"}{" "}
             <button
               onClick={() => setIsSignUp(!isSignUp)}
-              className="text-primary underline underline-offset-4 hover:text-primary/80"
+              className="text-foreground underline underline-offset-4 hover:text-foreground/80"
             >
               {isSignUp ? "Log in" : "Sign up"}
             </button>

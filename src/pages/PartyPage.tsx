@@ -1,7 +1,9 @@
 import { useParams } from "react-router-dom";
 import { useEvent } from "@/hooks/useEvent";
+import { getTemplate } from "@/lib/templates";
+import InvitationCard from "@/components/InvitationCard";
 import RSVPForm from "@/components/RSVPForm";
-import { PartyPopper, MapPin, CalendarDays } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const PartyPage = () => {
   const { eventId } = useParams<{ eventId: string }>();
@@ -9,53 +11,39 @@ const PartyPage = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center text-muted-foreground">
-        Loading party details...
+      <div className="min-h-screen flex flex-col items-center justify-center px-6">
+        <div className="w-full max-w-md space-y-6">
+          <Skeleton className="h-64 w-full rounded-lg" />
+          <Skeleton className="h-8 w-3/4 mx-auto" />
+          <Skeleton className="h-4 w-1/2 mx-auto" />
+          <Skeleton className="h-48 w-full rounded-lg" />
+        </div>
       </div>
     );
   }
 
   if (error || !event) {
     return (
-      <div className="min-h-screen flex items-center justify-center text-muted-foreground">
-        Party not found 😕
+      <div className="min-h-screen flex items-center justify-center text-muted-foreground font-sans">
+        Party not found
       </div>
     );
   }
 
-  const partyDate = new Date(event.date).toLocaleDateString("en-GB", {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
+  const template = getTemplate((event as any).template || "classic_cream");
 
   return (
-    <div className="min-h-screen flex flex-col items-center px-6 py-12">
-      <div className="w-full max-w-md space-y-8">
-        {/* Party Info */}
-        <div className="text-center space-y-4">
-          <div className="flex justify-center">
-            <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center">
-              <PartyPopper className="h-8 w-8 text-primary" />
-            </div>
-          </div>
-          <h1 className="text-3xl font-bold text-foreground">
-            {event.child_name}'s Party! 🎉
-          </h1>
-          <div className="space-y-2 text-muted-foreground">
-            <div className="flex items-center justify-center gap-2">
-              <CalendarDays className="h-4 w-4" />
-              <span>{partyDate}</span>
-            </div>
-            <div className="flex items-center justify-center gap-2">
-              <MapPin className="h-4 w-4" />
-              <span>{event.location}</span>
-            </div>
-          </div>
-        </div>
+    <div className="min-h-screen animate-fade-in">
+      {/* Invitation card — full-width themed hero */}
+      <InvitationCard
+        template={template}
+        childName={event.child_name}
+        date={event.date}
+        location={event.location}
+      />
 
-        {/* RSVP Form */}
+      {/* RSVP Form — base UI below the card */}
+      <div className="px-6 py-10 max-w-md mx-auto">
         <RSVPForm event={event} />
       </div>
     </div>

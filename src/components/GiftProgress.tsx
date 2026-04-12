@@ -16,24 +16,24 @@ const GiftProgress = ({ event, guests }: Props) => {
   const progress = attending.length > 0 ? (paid.length / attending.length) * 100 : 0;
 
   return (
-    <div className="p-5 rounded-2xl bg-card border space-y-4">
+    <div className="p-6 rounded-lg bg-card shadow-sm space-y-4">
       <div className="flex items-center gap-2">
-        <Gift className="h-5 w-5 text-primary" />
-        <h3 className="font-semibold text-foreground">Group Gift</h3>
+        <Gift className="h-5 w-5 text-primary" strokeWidth={1.5} />
+        <h3 className="font-medium text-foreground text-sm font-sans">Group Gift</h3>
       </div>
 
       <div className="space-y-2">
         <div className="flex justify-between text-sm">
           <span className="text-muted-foreground">
-            {paid.length} of {attending.length} parents have chipped in
+            {paid.length} of {attending.length} contributed
           </span>
         </div>
-        <Progress value={progress} className="h-2" />
+        <Progress value={progress} className="h-1.5" />
       </div>
 
-      <p className="text-2xl font-bold text-foreground">
+      <p className="text-2xl font-semibold text-foreground font-serif">
         £{(totalCollected / 100).toFixed(2)}
-        <span className="text-sm font-normal text-muted-foreground ml-1">collected</span>
+        <span className="text-sm font-normal text-muted-foreground font-sans ml-1">collected</span>
       </p>
     </div>
   );

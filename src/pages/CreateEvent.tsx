@@ -4,6 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import StepOne from "@/components/EventForm/StepOne";
+import StepTemplate from "@/components/EventForm/StepTemplate";
 import StepTwo from "@/components/EventForm/StepTwo";
 import StepThree from "@/components/EventForm/StepThree";
 
@@ -12,8 +13,9 @@ export interface EventFormData {
   date: string;
   location: string;
   organiserName: string;
+  template: string;
   giftEnabled: boolean;
-  giftAmount: string; // in £
+  giftAmount: string;
 }
 
 const CreateEvent = () => {
@@ -27,11 +29,24 @@ const CreateEvent = () => {
     date: "",
     location: "",
     organiserName: "",
+    template: "classic_cream",
     giftEnabled: false,
     giftAmount: "10",
   });
 
-  if (authLoading) return <div className="min-h-screen flex items-center justify-center text-muted-foreground">Loading...</div>;
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="w-full max-w-md px-6 space-y-4">
+          <div className="h-6 bg-muted rounded animate-pulse w-1/2" />
+          <div className="h-10 bg-muted rounded animate-pulse" />
+          <div className="h-10 bg-muted rounded animate-pulse" />
+          <div className="h-10 bg-muted rounded animate-pulse" />
+        </div>
+      </div>
+    );
+  }
+
   if (!user) {
     navigate("/login");
     return null;
@@ -54,6 +69,7 @@ const CreateEvent = () => {
           date: formData.date,
           location: formData.location,
           organiser_name: formData.organiserName,
+          template: formData.template,
           gift_enabled: formData.giftEnabled,
           gift_amount: amountPence,
         })
@@ -62,7 +78,7 @@ const CreateEvent = () => {
 
       if (error) throw error;
       setEventId(data.id);
-      setStep(3);
+      setStep(4);
     } catch (err: any) {
       toast.error(err.message || "Failed to create event");
     } finally {
@@ -70,16 +86,18 @@ const CreateEvent = () => {
     }
   };
 
+  const totalSteps = 4;
+
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-6 py-12">
+    <div className="min-h-screen flex flex-col items-center justify-center px-6 py-12 animate-fade-in">
       <div className="w-full max-w-md">
         {/* Progress */}
-        <div className="flex gap-2 mb-8">
-          {[1, 2, 3].map((s) => (
+        <div className="flex gap-2 mb-10">
+          {Array.from({ length: totalSteps }, (_, i) => i + 1).map((s) => (
             <div
               key={s}
-              className={`h-1.5 flex-1 rounded-full transition-colors ${
-                s <= step ? "bg-primary" : "bg-muted"
+              className={`h-1 flex-1 rounded-full transition-colors duration-300 ${
+                s <= step ? "bg-foreground" : "bg-muted"
               }`}
             />
           ))}
@@ -89,15 +107,23 @@ const CreateEvent = () => {
           <StepOne formData={formData} updateField={updateField} onNext={() => setStep(2)} />
         )}
         {step === 2 && (
-          <StepTwo
+          <StepTemplate
             formData={formData}
             updateField={updateField}
             onBack={() => setStep(1)}
+            onNext={() => setStep(3)}
+          />
+        )}
+        {step === 3 && (
+          <StepTwo
+            formData={formData}
+            updateField={updateField}
+            onBack={() => setStep(2)}
             onNext={handleCreate}
             submitting={submitting}
           />
         )}
-        {step === 3 && eventId && (
+        {step === 4 && eventId && (
           <StepThree eventId={eventId} formData={formData} />
         )}
       </div>
