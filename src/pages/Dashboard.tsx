@@ -99,7 +99,7 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="min-h-screen px-6 py-10 max-w-lg mx-auto space-y-8 animate-fade-in">
+    <div className="h-full page-scrollable px-6 py-10 max-w-lg mx-auto space-y-8 animate-fade-in">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>

@@ -4,7 +4,7 @@ import { Clock, Gift, Users } from "lucide-react";
 
 const Landing = () => {
   return (
-    <div className="min-h-screen flex flex-col animate-fade-in">
+    <div className="h-full flex flex-col overflow-hidden animate-fade-in">
       <header className="px-6 py-5 flex items-center justify-between">
         <span className="text-lg font-semibold text-foreground font-serif tracking-wide">PartyPal</span>
         <Link to="/login">
@@ -12,7 +12,7 @@ const Landing = () => {
         </Link>
       </header>
 
-      <main className="flex-1 flex flex-col items-center justify-center px-6 text-center max-w-md mx-auto gap-10 pb-24">
+      <main className="flex-1 flex flex-col items-center justify-center px-6 text-center max-w-md mx-auto gap-6 pb-8">
         <div className="space-y-5">
           <h1 className="text-4xl font-serif font-semibold tracking-tight text-foreground leading-[1.15]">
             The easiest way to organise a children's party
@@ -28,7 +28,7 @@ const Landing = () => {
           </Button>
         </Link>
 
-        <div className="grid gap-5 w-full mt-4">
+        <div className="grid gap-3 w-full">
           <Feature
             icon={<Clock className="h-5 w-5 text-primary" strokeWidth={1.5} />}
             title="Two-minute setup"
@@ -51,7 +51,7 @@ const Landing = () => {
 };
 
 const Feature = ({ icon, title, description }: { icon: React.ReactNode; title: string; description: string }) => (
-  <div className="flex items-start gap-4 text-left p-5 rounded-lg bg-card shadow-sm">
+  <div className="flex items-start gap-3 text-left p-4 rounded-lg bg-card shadow-sm">
     <div className="mt-0.5">{icon}</div>
     <div>
       <h3 className="font-semibold text-foreground text-sm">{title}</h3>

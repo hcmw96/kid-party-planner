@@ -37,7 +37,7 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-6 animate-fade-in">
+    <div className="h-full flex items-center justify-center px-6 overflow-hidden animate-fade-in">
       <Card className="w-full max-w-sm">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-serif">{isSignUp ? "Create account" : "Welcome back"}</CardTitle>
