@@ -42,8 +42,12 @@ const Login = () => {
     `${underlineBase} ${value ? underlineFilled : underlineIdle}`;
 
   return (
-    <div className="h-full flex items-center justify-center px-6 overflow-hidden animate-fade-in">
-      <div className="w-full max-w-sm space-y-8">
+    <div
+      className="h-full flex items-center justify-center px-6 overflow-hidden animate-fade-in relative"
+      style={{ backgroundImage: `url(${loginBg})`, backgroundSize: 'cover', backgroundPosition: 'center' }}
+    >
+      <div className="absolute inset-0 bg-background/60" />
+      <div className="w-full max-w-sm space-y-8 relative z-10">
         {/* Header */}
         <div className="text-center">
           <h1 className="text-3xl font-serif italic text-foreground">
