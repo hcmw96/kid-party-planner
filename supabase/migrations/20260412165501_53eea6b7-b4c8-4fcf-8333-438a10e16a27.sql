@@ -1,0 +1,1 @@
+ALTER TABLE public.events ADD COLUMN template TEXT NOT NULL DEFAULT 'classic_cream';
