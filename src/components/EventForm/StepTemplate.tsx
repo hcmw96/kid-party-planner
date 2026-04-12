@@ -20,7 +20,7 @@ const StepTemplate = ({ formData, updateField, onBack, onNext }: Props) => {
         <h2 className="text-3xl font-serif italic text-foreground">Choose your invitation</h2>
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="space-y-3">
         {templates.map((template) => (
           <InvitationPreview
             key={template.id}
