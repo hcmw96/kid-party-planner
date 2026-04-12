@@ -18,9 +18,9 @@ const InvitationPreview = ({ template, childName, selected, onSelect }: Props) =
         selected ? "ring-2 ring-foreground ring-offset-2 ring-offset-background" : "hover:shadow-md"
       }`}
     >
-      {/* Mini invitation card */}
+      {/* Landscape invitation preview */}
       <div
-        className="aspect-[4/5] flex flex-col items-center justify-center p-8 relative"
+        className="aspect-[16/9] flex flex-col items-center justify-center p-6 relative"
         style={{
           backgroundColor: template.palette.background,
           color: template.palette.text,
@@ -29,19 +29,19 @@ const InvitationPreview = ({ template, childName, selected, onSelect }: Props) =
       >
         {/* Decorative border */}
         <div
-          className="absolute inset-4 border"
+          className="absolute inset-3 border"
           style={{ borderColor: template.palette.accent + "40" }}
         />
 
-        <div className="text-center space-y-3 z-10">
+        <div className="text-center space-y-2 z-10">
           <p
-            className="text-xs tracking-widest uppercase"
+            className="text-[10px] tracking-widest uppercase"
             style={{ color: template.palette.muted }}
           >
             You're invited to
           </p>
           <h3
-            className="text-2xl font-semibold"
+            className="text-xl font-semibold"
             style={{
               fontStyle: template.fontStyle || "normal",
               textTransform: template.textTransform || "none",
@@ -51,14 +51,14 @@ const InvitationPreview = ({ template, childName, selected, onSelect }: Props) =
             {displayName}'s Party
           </h3>
           <div
-            className="w-12 h-px mx-auto"
+            className="w-10 h-px mx-auto"
             style={{ backgroundColor: template.palette.accent }}
           />
         </div>
       </div>
 
       {/* Label */}
-      <div className="px-4 py-3 bg-card">
+      <div className="px-4 py-2.5 bg-card">
         <p className="font-sans text-sm font-medium text-foreground">{template.name}</p>
         <p className="font-sans text-xs text-muted-foreground">{template.description}</p>
       </div>
