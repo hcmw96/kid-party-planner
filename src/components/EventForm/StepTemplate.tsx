@@ -14,10 +14,10 @@ const StepTemplate = ({ formData, updateField, onBack, onNext }: Props) => {
   return (
     <div className="space-y-8">
       <div>
-        <h2 className="text-2xl font-bold text-foreground font-serif">Choose your invitation</h2>
-        <p className="text-muted-foreground mt-2 font-sans text-sm">
-          Select a design for your guests
+        <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-2 font-sans">
+          Step 2 of 3
         </p>
+        <h2 className="text-3xl font-serif italic text-foreground">Choose your invitation</h2>
       </div>
 
       <div className="grid grid-cols-2 gap-4">
@@ -36,8 +36,8 @@ const StepTemplate = ({ formData, updateField, onBack, onNext }: Props) => {
         <Button variant="outline" onClick={onBack} className="flex-1" size="lg">
           Back
         </Button>
-        <Button onClick={onNext} className="flex-1" size="lg">
-          Next
+        <Button onClick={onNext} className="flex-1 uppercase tracking-[0.15em]" size="lg">
+          Continue
         </Button>
       </div>
     </div>
