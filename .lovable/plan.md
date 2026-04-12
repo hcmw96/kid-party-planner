@@ -1,33 +1,29 @@
 
 
-# Native iOS App — No-Scroll Pages + Viewport Fix
+# Refine StepOne to Match Reference Design
 
-Since this is a native iOS app (Despia WebView), pages should fill the viewport exactly without scrolling. The content needs to fit within the safe area.
+Matching the reference screenshot: serif italic title, underline-only inputs, split date picker, step indicator text, and "Continue" CTA.
 
 ## Changes
 
-### 1. Global styles (`src/index.css`)
-- Set `html, body, #root` to `height: 100%` and `overflow: hidden` by default
-- Add a utility class `.page-scrollable` that opts specific pages back into scrolling (for pages like Dashboard or PartyPage that genuinely need it)
+### 1. `src/components/EventForm/StepOne.tsx` — Full restyle
 
-### 2. Landing page (`src/pages/Landing.tsx`)
-- Change `min-h-screen` to `h-screen` with `overflow-hidden`
-- Tighten spacing so all content fits in a single viewport — reduce gaps, compress feature cards
-- Use `flex-1` to let the content area fill available space without overflowing
+- **Title**: Use `font-serif italic` for "Party details" heading
+- **Step hint**: Add "STEP 1 OF 3" label above the title in uppercase, small, muted, tracked-wide
+- **Labels**: Uppercase, small, letter-spaced, muted — matching the reference (`text-xs uppercase tracking-widest text-muted-foreground`)
+- **Inputs**: Remove bordered Input component. Use custom underline-only inputs: `border-0 border-b border-muted-foreground/30 rounded-none bg-transparent focus:border-foreground px-0`. Dark underline when field has a value.
+- **Date field**: Replace single `<input type="date">` with 3 separate fields — Day, Month, Year. Day and Year as number inputs, Month as a `<select>` with month names. Each gets the underline style, laid out in a 3-column grid.
+- **Placeholders**: Softer — "First name" not "e.g. Sarah", "Venue name or address" not "e.g. The Village Hall"
+- **Button**: Change "Next" to "Continue" in uppercase with tracking
+- **Footer hint**: Add "Gift options on the next step" below the button in small muted text
+- **Validation**: Parse the 3 date segments back into a `YYYY-MM-DD` string for the form data
 
-### 3. Login page (`src/pages/Login.tsx`)
-- Change `min-h-screen` to `h-screen` with `overflow-hidden`
-- Already centred, should fit naturally
+### 2. `src/pages/CreateEvent.tsx` — Minor
 
-### 4. ThankYou page (`src/pages/ThankYou.tsx`)
-- Same treatment — `h-screen overflow-hidden`, centred content
+- Update `totalSteps` display context — the step hint is now inside each step component, not global. No structural change needed; the progress bar stays.
 
-### 5. Pages that DO scroll
-- `Dashboard.tsx`, `PartyPage.tsx`, `CreateEvent.tsx` — these have variable-length content and should keep `min-h-screen` with normal scroll behaviour
-- Apply `.page-scrollable` class to their wrapper
+### 3. `src/components/EventForm/StepTwo.tsx` and `StepTemplate.tsx`
 
-### Technical detail
-- On `#root`: `height: 100%; overflow: hidden` as the default
-- Scrollable pages override with `overflow-y: auto` on their own wrapper
-- This prevents iOS rubber-band bounce on fixed pages
+- Apply same input/label styling pattern for consistency (underline inputs, uppercase labels)
+- Update button text to "Continue" where appropriate
 
