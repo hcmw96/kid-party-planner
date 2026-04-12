@@ -17,8 +17,11 @@ const StepTwo = ({ formData, updateField, onBack, onNext, submitting }: Props) =
   return (
     <div className="space-y-8">
       <div>
-        <h2 className="text-2xl font-semibold text-foreground font-serif">Group gift</h2>
-        <p className="text-muted-foreground mt-2 text-sm">Let parents chip in together</p>
+        <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-2 font-sans">
+          Step 3 of 3
+        </p>
+        <h2 className="text-3xl font-serif italic text-foreground">Group gift</h2>
+        <p className="text-muted-foreground mt-2 text-sm font-sans">Let parents chip in together</p>
       </div>
 
       <div className="p-6 rounded-lg bg-card shadow-sm space-y-5">
@@ -53,8 +56,8 @@ const StepTwo = ({ formData, updateField, onBack, onNext, submitting }: Props) =
         <Button variant="outline" onClick={onBack} className="flex-1" size="lg">
           Back
         </Button>
-        <Button onClick={onNext} disabled={submitting} className="flex-1" size="lg">
-          {submitting ? "Creating..." : "Create party"}
+        <Button onClick={onNext} disabled={submitting} className="flex-1 uppercase tracking-[0.15em]" size="lg">
+          {submitting ? "Creating…" : "Create party"}
         </Button>
       </div>
     </div>
