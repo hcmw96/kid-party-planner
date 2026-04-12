@@ -89,7 +89,7 @@ const CreateEvent = () => {
   const totalSteps = 4;
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-6 py-12 animate-fade-in">
+    <div className="h-full page-scrollable flex flex-col items-center justify-center px-6 py-12 animate-fade-in">
       <div className="w-full max-w-md">
         {/* Progress */}
         <div className="flex gap-2 mb-10">

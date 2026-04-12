@@ -33,7 +33,7 @@ const PartyPage = () => {
   const template = getTemplate((event as any).template || "classic_cream");
 
   return (
-    <div className="min-h-screen animate-fade-in">
+    <div className="h-full page-scrollable animate-fade-in">
       {/* Invitation card — full-width themed hero */}
       <InvitationCard
         template={template}

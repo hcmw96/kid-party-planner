@@ -83,6 +83,11 @@
     @apply border-border;
   }
 
+  html, body, #root {
+    height: 100%;
+    overflow: hidden;
+  }
+
   body {
     @apply bg-background text-foreground;
     font-family: 'DM Sans', sans-serif;
@@ -95,4 +100,9 @@
   h1, h2, h3 {
     font-family: 'Cormorant Garamond', serif;
   }
+}
+
+.page-scrollable {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
