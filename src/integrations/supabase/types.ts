@@ -14,7 +14,89 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      events: {
+        Row: {
+          child_name: string
+          created_at: string
+          date: string
+          gift_amount: number | null
+          gift_enabled: boolean
+          id: string
+          location: string
+          organiser_id: string
+          organiser_name: string
+          title: string
+        }
+        Insert: {
+          child_name: string
+          created_at?: string
+          date: string
+          gift_amount?: number | null
+          gift_enabled?: boolean
+          id?: string
+          location: string
+          organiser_id: string
+          organiser_name: string
+          title: string
+        }
+        Update: {
+          child_name?: string
+          created_at?: string
+          date?: string
+          gift_amount?: number | null
+          gift_enabled?: boolean
+          id?: string
+          location?: string
+          organiser_id?: string
+          organiser_name?: string
+          title?: string
+        }
+        Relationships: []
+      }
+      guests: {
+        Row: {
+          contribution_status: Database["public"]["Enums"]["contribution_status"]
+          created_at: string
+          dietary_notes: string | null
+          email: string
+          event_id: string
+          id: string
+          name: string
+          rsvp_status: Database["public"]["Enums"]["rsvp_status"]
+          stripe_session_id: string | null
+        }
+        Insert: {
+          contribution_status?: Database["public"]["Enums"]["contribution_status"]
+          created_at?: string
+          dietary_notes?: string | null
+          email: string
+          event_id: string
+          id?: string
+          name: string
+          rsvp_status?: Database["public"]["Enums"]["rsvp_status"]
+          stripe_session_id?: string | null
+        }
+        Update: {
+          contribution_status?: Database["public"]["Enums"]["contribution_status"]
+          created_at?: string
+          dietary_notes?: string | null
+          email?: string
+          event_id?: string
+          id?: string
+          name?: string
+          rsvp_status?: Database["public"]["Enums"]["rsvp_status"]
+          stripe_session_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "guests_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -23,7 +105,8 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      contribution_status: "not_applicable" | "unpaid" | "paid"
+      rsvp_status: "pending" | "attending" | "not_attending"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +233,9 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      contribution_status: ["not_applicable", "unpaid", "paid"],
+      rsvp_status: ["pending", "attending", "not_attending"],
+    },
   },
 } as const
