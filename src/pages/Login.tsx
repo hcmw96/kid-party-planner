@@ -50,7 +50,7 @@ const Login = () => {
       <div className="w-full max-w-sm space-y-8 relative z-10">
         {/* Logo */}
         <div className="text-center">
-          <span className="text-2xl font-serif font-bold tracking-wide text-foreground">PartyPal</span>
+          <span className="text-sm font-serif font-semibold tracking-[0.3em] uppercase text-foreground">PartyPal</span>
         </div>
         {/* Header */}
         <div className="text-center">
