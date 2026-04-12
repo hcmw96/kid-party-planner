@@ -13,13 +13,13 @@ const StepOne = ({ formData, updateField, onNext }: Props) => {
   const isValid = formData.childName && formData.date && formData.location && formData.organiserName;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <div>
-        <h2 className="text-2xl font-bold text-foreground">Party details 🎈</h2>
-        <p className="text-muted-foreground mt-1">Tell us about the birthday star</p>
+        <h2 className="text-2xl font-semibold text-foreground font-serif">Party details</h2>
+        <p className="text-muted-foreground mt-2 text-sm">Tell us about the birthday</p>
       </div>
 
-      <div className="space-y-4">
+      <div className="space-y-5">
         <div className="space-y-2">
           <Label htmlFor="childName">Child's name</Label>
           <Input
@@ -42,7 +42,7 @@ const StepOne = ({ formData, updateField, onNext }: Props) => {
           <Label htmlFor="location">Location</Label>
           <Input
             id="location"
-            placeholder="e.g. Soft Play Palace, 10 High Street"
+            placeholder="e.g. The Village Hall, Chipping Norton"
             value={formData.location}
             onChange={(e) => updateField("location", e.target.value)}
           />

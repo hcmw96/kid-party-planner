@@ -4,77 +4,77 @@
 
 @layer base {
   :root {
-    --background: 30 25% 97%;
-    --foreground: 20 20% 18%;
+    --background: 30 20% 97%;
+    --foreground: 240 6% 12%;
 
     --card: 0 0% 100%;
-    --card-foreground: 20 20% 18%;
+    --card-foreground: 240 6% 12%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 20 20% 18%;
+    --popover-foreground: 240 6% 12%;
 
-    --primary: 12 76% 61%;
-    --primary-foreground: 0 0% 100%;
+    --primary: 18 28% 70%;
+    --primary-foreground: 240 6% 12%;
 
-    --secondary: 270 50% 80%;
-    --secondary-foreground: 270 40% 25%;
+    --secondary: 135 12% 58%;
+    --secondary-foreground: 135 20% 15%;
 
-    --muted: 30 20% 92%;
-    --muted-foreground: 20 10% 50%;
+    --muted: 30 15% 92%;
+    --muted-foreground: 20 8% 46%;
 
-    --accent: 160 45% 65%;
-    --accent-foreground: 160 40% 15%;
+    --accent: 30 20% 94%;
+    --accent-foreground: 240 6% 12%;
 
-    --destructive: 0 84.2% 60.2%;
+    --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 30 15% 88%;
-    --input: 30 15% 88%;
-    --ring: 12 76% 61%;
+    --border: 30 10% 90%;
+    --input: 30 10% 88%;
+    --ring: 18 28% 70%;
 
-    --radius: 1rem;
+    --radius: 0.5rem;
 
     --sidebar-background: 30 20% 96%;
-    --sidebar-foreground: 20 20% 18%;
-    --sidebar-primary: 12 76% 61%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 30 20% 92%;
-    --sidebar-accent-foreground: 20 20% 18%;
-    --sidebar-border: 30 15% 88%;
-    --sidebar-ring: 12 76% 61%;
+    --sidebar-foreground: 240 6% 12%;
+    --sidebar-primary: 18 28% 70%;
+    --sidebar-primary-foreground: 240 6% 12%;
+    --sidebar-accent: 30 15% 92%;
+    --sidebar-accent-foreground: 240 6% 12%;
+    --sidebar-border: 30 10% 90%;
+    --sidebar-ring: 18 28% 70%;
 
     --safe-area-top: env(safe-area-inset-top, 0px);
     --safe-area-bottom: env(safe-area-inset-bottom, 0px);
   }
 
   .dark {
-    --background: 20 20% 8%;
-    --foreground: 30 25% 95%;
-    --card: 20 18% 12%;
-    --card-foreground: 30 25% 95%;
-    --popover: 20 18% 12%;
-    --popover-foreground: 30 25% 95%;
-    --primary: 12 76% 61%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 270 30% 30%;
-    --secondary-foreground: 270 50% 90%;
-    --muted: 20 15% 18%;
-    --muted-foreground: 20 10% 60%;
-    --accent: 160 30% 25%;
-    --accent-foreground: 160 45% 85%;
-    --destructive: 0 62.8% 30.6%;
+    --background: 240 6% 7%;
+    --foreground: 30 20% 95%;
+    --card: 240 6% 10%;
+    --card-foreground: 30 20% 95%;
+    --popover: 240 6% 10%;
+    --popover-foreground: 30 20% 95%;
+    --primary: 18 28% 70%;
+    --primary-foreground: 240 6% 12%;
+    --secondary: 135 12% 30%;
+    --secondary-foreground: 135 20% 85%;
+    --muted: 240 6% 15%;
+    --muted-foreground: 30 10% 55%;
+    --accent: 240 6% 15%;
+    --accent-foreground: 30 20% 95%;
+    --destructive: 0 62% 30%;
     --destructive-foreground: 0 0% 100%;
-    --border: 20 15% 20%;
-    --input: 20 15% 20%;
-    --ring: 12 76% 61%;
-    --sidebar-background: 20 18% 10%;
-    --sidebar-foreground: 30 25% 95%;
-    --sidebar-primary: 12 76% 61%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 20 15% 18%;
-    --sidebar-accent-foreground: 30 25% 95%;
-    --sidebar-border: 20 15% 20%;
-    --sidebar-ring: 12 76% 61%;
+    --border: 240 6% 18%;
+    --input: 240 6% 18%;
+    --ring: 18 28% 70%;
+    --sidebar-background: 240 6% 8%;
+    --sidebar-foreground: 30 20% 95%;
+    --sidebar-primary: 18 28% 70%;
+    --sidebar-primary-foreground: 240 6% 12%;
+    --sidebar-accent: 240 6% 15%;
+    --sidebar-accent-foreground: 30 20% 95%;
+    --sidebar-border: 240 6% 18%;
+    --sidebar-ring: 18 28% 70%;
   }
 }
 
@@ -85,7 +85,14 @@
 
   body {
     @apply bg-background text-foreground;
+    font-family: 'DM Sans', sans-serif;
     padding-top: var(--safe-area-top);
     padding-bottom: var(--safe-area-bottom);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  h1, h2, h3 {
+    font-family: 'Cormorant Garamond', serif;
   }
 }

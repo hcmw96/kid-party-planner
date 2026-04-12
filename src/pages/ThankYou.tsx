@@ -6,17 +6,17 @@ const ThankYou = () => {
   const { eventId } = useParams<{ eventId: string }>();
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-6">
-      <div className="text-center space-y-6 max-w-sm">
+    <div className="min-h-screen flex items-center justify-center px-6 animate-fade-in">
+      <div className="text-center space-y-8 max-w-sm">
         <div className="flex justify-center">
-          <div className="h-16 w-16 rounded-full bg-accent/20 flex items-center justify-center">
-            <Heart className="h-8 w-8 text-primary" />
-          </div>
+          <Heart className="h-10 w-10 text-primary" strokeWidth={1.5} />
         </div>
-        <h1 className="text-3xl font-bold text-foreground">Thank you! 💝</h1>
-        <p className="text-muted-foreground">
-          Your contribution has been received. The birthday star is going to love their gift!
-        </p>
+        <div className="space-y-3">
+          <h1 className="text-3xl font-semibold text-foreground font-serif">Thank you</h1>
+          <p className="text-muted-foreground">
+            Your contribution has been received. The birthday star is going to love their gift.
+          </p>
+        </div>
         <Link to={`/party/${eventId}`}>
           <Button variant="outline">Back to party page</Button>
         </Link>

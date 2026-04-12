@@ -1,51 +1,46 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { PartyPopper, Clock, Gift, Users } from "lucide-react";
+import { Clock, Gift, Users } from "lucide-react";
 
 const Landing = () => {
   return (
-    <div className="min-h-screen flex flex-col">
-      {/* Hero */}
-      <header className="px-6 py-4 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <PartyPopper className="h-7 w-7 text-primary" />
-          <span className="text-xl font-bold text-foreground">PartyPal</span>
-        </div>
+    <div className="min-h-screen flex flex-col animate-fade-in">
+      <header className="px-6 py-5 flex items-center justify-between">
+        <span className="text-lg font-semibold text-foreground font-serif tracking-wide">PartyPal</span>
         <Link to="/login">
-          <Button variant="outline" size="sm">Log in</Button>
+          <Button variant="ghost" size="sm">Log in</Button>
         </Link>
       </header>
 
-      <main className="flex-1 flex flex-col items-center justify-center px-6 text-center max-w-lg mx-auto gap-8 pb-20">
-        <div className="space-y-4">
-          <h1 className="text-4xl font-bold tracking-tight text-foreground leading-tight">
-            Organise a kids' party in <span className="text-primary">under 2 minutes</span>
+      <main className="flex-1 flex flex-col items-center justify-center px-6 text-center max-w-md mx-auto gap-10 pb-24">
+        <div className="space-y-5">
+          <h1 className="text-4xl font-serif font-semibold tracking-tight text-foreground leading-[1.15]">
+            The easiest way to organise a children's party
           </h1>
-          <p className="text-lg text-muted-foreground">
+          <p className="text-base text-muted-foreground leading-relaxed">
             One link for RSVPs, dietary info, and a group gift. No app downloads, no fuss.
           </p>
         </div>
 
-        <Link to="/login">
-          <Button size="lg" className="text-lg px-8 py-6 rounded-2xl shadow-lg">
-            Get Started — it's free 🎉
+        <Link to="/login" className="w-full">
+          <Button size="lg" className="w-full text-base">
+            Get started — it's free
           </Button>
         </Link>
 
-        {/* Features */}
-        <div className="grid gap-6 w-full mt-8">
+        <div className="grid gap-5 w-full mt-4">
           <Feature
-            icon={<Clock className="h-6 w-6 text-primary" />}
-            title="2-minute setup"
+            icon={<Clock className="h-5 w-5 text-primary" strokeWidth={1.5} />}
+            title="Two-minute setup"
             description="Create your party, share a link. Done."
           />
           <Feature
-            icon={<Users className="h-6 w-6 text-secondary" />}
+            icon={<Users className="h-5 w-5 text-secondary" strokeWidth={1.5} />}
             title="Instant RSVPs"
-            description="Guests respond in 2 taps — no login needed."
+            description="Guests respond in two taps — no login needed."
           />
           <Feature
-            icon={<Gift className="h-6 w-6 text-accent" />}
+            icon={<Gift className="h-5 w-5 text-primary" strokeWidth={1.5} />}
             title="Group gift"
             description="Collect contributions so parents can chip in together."
           />
@@ -56,11 +51,11 @@ const Landing = () => {
 };
 
 const Feature = ({ icon, title, description }: { icon: React.ReactNode; title: string; description: string }) => (
-  <div className="flex items-start gap-4 text-left p-4 rounded-2xl bg-card border">
+  <div className="flex items-start gap-4 text-left p-5 rounded-lg bg-card shadow-sm">
     <div className="mt-0.5">{icon}</div>
     <div>
-      <h3 className="font-semibold text-foreground">{title}</h3>
-      <p className="text-sm text-muted-foreground">{description}</p>
+      <h3 className="font-semibold text-foreground text-sm">{title}</h3>
+      <p className="text-sm text-muted-foreground mt-0.5">{description}</p>
     </div>
   </div>
 );

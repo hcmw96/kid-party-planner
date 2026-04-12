@@ -25,6 +25,7 @@ export type Database = {
           location: string
           organiser_id: string
           organiser_name: string
+          template: string
           title: string
         }
         Insert: {
@@ -37,6 +38,7 @@ export type Database = {
           location: string
           organiser_id: string
           organiser_name: string
+          template?: string
           title: string
         }
         Update: {
@@ -49,6 +51,7 @@ export type Database = {
           location?: string
           organiser_id?: string
           organiser_name?: string
+          template?: string
           title?: string
         }
         Relationships: []
