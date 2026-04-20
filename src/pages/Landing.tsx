@@ -28,7 +28,7 @@ const Landing = () => {
             The easiest way to organise a children's party
           </h1>
           <p className="text-sm text-muted-foreground leading-relaxed font-sans">
-            One link for RSVPs, dietary info, and a group gift. No app downloads, no fuss.
+            One link for RSVPs, dietary info, and a group gift.<br />No app downloads, no fuss.
           </p>
         </div>
 
