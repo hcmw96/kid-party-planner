@@ -20,9 +20,10 @@ const underlineFilled = "border-foreground";
 const StepOne = ({ formData, updateField, onNext }: Props) => {
   // Parse existing date into segments
   const parseDateParts = (dateStr: string) => {
-    if (!dateStr) return { day: "", month: "", year: "" };
+    const currentYear = String(new Date().getFullYear());
+    if (!dateStr) return { day: "", month: "", year: currentYear };
     const [y, m, d] = dateStr.split("-");
-    return { day: d || "", month: m ? String(parseInt(m)) : "", year: y || "" };
+    return { day: d || "", month: m ? String(parseInt(m)) : "", year: y || currentYear };
   };
 
   const [dateParts, setDateParts] = useState(parseDateParts(formData.date));
