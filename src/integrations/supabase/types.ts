@@ -19,6 +19,7 @@ export type Database = {
           child_name: string
           created_at: string
           date: string
+          description: string | null
           gift_amount: number | null
           gift_enabled: boolean
           id: string
@@ -32,6 +33,7 @@ export type Database = {
           child_name: string
           created_at?: string
           date: string
+          description?: string | null
           gift_amount?: number | null
           gift_enabled?: boolean
           id?: string
@@ -45,6 +47,7 @@ export type Database = {
           child_name?: string
           created_at?: string
           date?: string
+          description?: string | null
           gift_amount?: number | null
           gift_enabled?: boolean
           id?: string
