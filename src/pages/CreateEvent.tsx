@@ -12,6 +12,7 @@ export interface EventFormData {
   childName: string;
   date: string;
   location: string;
+  description: string;
   organiserName: string;
   template: string;
   giftEnabled: boolean;
