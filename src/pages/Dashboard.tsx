@@ -12,6 +12,7 @@ import GiftProgress from "@/components/GiftProgress";
 import { Copy, Check, Send, Bell, LogOut, CalendarDays, MapPin } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { getShareUrl } from "@/lib/shareUrl";
 
 const Dashboard = () => {
   const { eventId } = useParams<{ eventId: string }>();
@@ -44,7 +45,7 @@ const Dashboard = () => {
     return <div className="min-h-screen flex items-center justify-center text-muted-foreground">Not authorised</div>;
   }
 
-  const shareUrl = `${window.location.origin}/party/${eventId}`;
+  const shareUrl = getShareUrl(eventId!);
   const attending = guests.filter((g) => g.rsvp_status === "attending");
   const dietaryNotes = attending
     .filter((g) => g.dietary_notes)
