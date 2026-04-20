@@ -24,6 +24,9 @@ export type Database = {
           gift_enabled: boolean
           id: string
           location: string
+          location_address: string | null
+          location_lat: number | null
+          location_lng: number | null
           organiser_id: string
           organiser_name: string
           template: string
@@ -38,6 +41,9 @@ export type Database = {
           gift_enabled?: boolean
           id?: string
           location: string
+          location_address?: string | null
+          location_lat?: number | null
+          location_lng?: number | null
           organiser_id: string
           organiser_name: string
           template?: string
@@ -52,6 +58,9 @@ export type Database = {
           gift_enabled?: boolean
           id?: string
           location?: string
+          location_address?: string | null
+          location_lat?: number | null
+          location_lng?: number | null
           organiser_id?: string
           organiser_name?: string
           template?: string
