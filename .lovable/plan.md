@@ -1,29 +1,35 @@
 
 
-# Refine StepOne to Match Reference Design
+# RSVP page: show gift link + add party description
 
-Matching the reference screenshot: serif italic title, underline-only inputs, split date picker, step indicator text, and "Continue" CTA.
+Two changes:
 
-## Changes
+## 1. Add `description` field to events
 
-### 1. `src/components/EventForm/StepOne.tsx` — Full restyle
+**Database migration**: add `description text` (nullable) to `events` table.
 
-- **Title**: Use `font-serif italic` for "Party details" heading
-- **Step hint**: Add "STEP 1 OF 3" label above the title in uppercase, small, muted, tracked-wide
-- **Labels**: Uppercase, small, letter-spaced, muted — matching the reference (`text-xs uppercase tracking-widest text-muted-foreground`)
-- **Inputs**: Remove bordered Input component. Use custom underline-only inputs: `border-0 border-b border-muted-foreground/30 rounded-none bg-transparent focus:border-foreground px-0`. Dark underline when field has a value.
-- **Date field**: Replace single `<input type="date">` with 3 separate fields — Day, Month, Year. Day and Year as number inputs, Month as a `<select>` with month names. Each gets the underline style, laid out in a 3-column grid.
-- **Placeholders**: Softer — "First name" not "e.g. Sarah", "Venue name or address" not "e.g. The Village Hall"
-- **Button**: Change "Next" to "Continue" in uppercase with tracking
-- **Footer hint**: Add "Gift options on the next step" below the button in small muted text
-- **Validation**: Parse the 3 date segments back into a `YYYY-MM-DD` string for the form data
+**`StepOne.tsx`**: add a textarea field after location — "Party details (optional)" — for times, what to bring, address details, dress code, etc. Underline-style consistent with other fields (textarea with bottom border only).
 
-### 2. `src/pages/CreateEvent.tsx` — Minor
+**`CreateEvent.tsx`**: add `description: ""` to `EventFormData`, include it in the insert.
 
-- Update `totalSteps` display context — the step hint is now inside each step component, not global. No structural change needed; the progress bar stays.
+**`InvitationCard.tsx`**: render the description below date/location as a soft, centred paragraph in the template's muted colour, preserving line breaks (`whitespace-pre-line`).
 
-### 3. `src/components/EventForm/StepTwo.tsx` and `StepTemplate.tsx`
+## 2. Surface the gift contribution on the invitation (before RSVP)
 
-- Apply same input/label styling pattern for consistency (underline inputs, uppercase labels)
-- Update button text to "Continue" where appropriate
+Currently the "Pay £X" button only appears on the RSVP success screen. Move/duplicate so parents see it inline on the party page.
+
+**`PartyPage.tsx`**: between the InvitationCard and RSVPForm, add a `GiftCallout` block (only when `event.gift_enabled` and `gift_amount > 0`) — shows the gift icon, amount, short copy, and a "Chip in £X" button that scrolls to / opens a Stripe checkout session directly (re-uses the existing `create-checkout-session` edge function, but without requiring a guest_id — or prompts name/email first).
+
+**Decision needed for the gift flow** — the existing checkout requires a `guest_id`. Two options:
+- **A) Keep gift tied to RSVP** (current behaviour): leave checkout post-RSVP, but add a clear preview banner on the invitation saying "£X group gift — chip in after you RSVP" so parents see the ask immediately. No backend changes.
+- **B) Allow standalone gifting**: parents can pay without RSVPing. Requires edge function update to create a guest record on the fly with name/email captured in a small modal.
+
+Recommending **A** — simpler, keeps RSVP as the single entry point, and the friction is minimal since the RSVP form is right there. The banner makes the ask visible immediately.
+
+## Files changed
+- `supabase/migrations/` (new — add `description` column)
+- `src/components/EventForm/StepOne.tsx` (textarea field)
+- `src/pages/CreateEvent.tsx` (form data + insert)
+- `src/components/InvitationCard.tsx` (render description)
+- `src/pages/PartyPage.tsx` (add GiftCallout banner above RSVP form)
 
