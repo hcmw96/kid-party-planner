@@ -4,6 +4,7 @@ import { getTemplate } from "@/lib/templates";
 import InvitationCard from "@/components/InvitationCard";
 import RSVPForm from "@/components/RSVPForm";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Gift } from "lucide-react";
 
 const PartyPage = () => {
   const { eventId } = useParams<{ eventId: string }>();
@@ -31,6 +32,12 @@ const PartyPage = () => {
   }
 
   const template = getTemplate((event as any).template || "classic_cream");
+  const showGift = event.gift_enabled && event.gift_amount && event.gift_amount > 0;
+  const giftAmount = showGift ? (event.gift_amount! / 100).toFixed(2) : null;
+
+  const scrollToRSVP = () => {
+    document.getElementById("rsvp-form")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
 
   return (
     <div className="h-full page-scrollable animate-fade-in">
@@ -40,10 +47,34 @@ const PartyPage = () => {
         childName={event.child_name}
         date={event.date}
         location={event.location}
+        description={(event as any).description}
       />
 
+      {/* Gift callout — visible before RSVP */}
+      {showGift && (
+        <div className="px-6 pt-8 max-w-md mx-auto">
+          <div className="rounded-lg border border-border bg-accent/40 p-5 text-center space-y-3">
+            <div className="flex items-center justify-center gap-2">
+              <Gift className="h-4 w-4 text-foreground" strokeWidth={1.5} />
+              <span className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-sans">
+                Group gift
+              </span>
+            </div>
+            <p className="text-sm text-foreground font-sans leading-relaxed">
+              Chip in <span className="font-semibold">£{giftAmount}</span> towards a present for {event.child_name}
+            </p>
+            <button
+              onClick={scrollToRSVP}
+              className="text-[11px] uppercase tracking-[0.15em] font-sans text-muted-foreground hover:text-foreground transition-colors underline underline-offset-4"
+            >
+              RSVP below to chip in
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* RSVP Form — base UI below the card */}
-      <div className="px-6 py-10 max-w-md mx-auto">
+      <div id="rsvp-form" className="px-6 py-10 max-w-md mx-auto">
         <RSVPForm event={event} />
       </div>
     </div>

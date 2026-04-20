@@ -5,9 +5,10 @@ interface Props {
   childName: string;
   date: string;
   location: string;
+  description?: string | null;
 }
 
-const InvitationCard = ({ template, childName, date, location }: Props) => {
+const InvitationCard = ({ template, childName, date, location, description }: Props) => {
   const partyDate = new Date(date).toLocaleDateString("en-GB", {
     weekday: "long",
     day: "numeric",
@@ -83,6 +84,11 @@ const InvitationCard = ({ template, childName, date, location }: Props) => {
           <div className="space-y-3 font-sans text-sm" style={{ color: template.palette.muted }}>
             <p>{partyDate}</p>
             <p>{location}</p>
+            {description && (
+              <p className="whitespace-pre-line pt-3 leading-relaxed text-[13px]">
+                {description}
+              </p>
+            )}
           </div>
         </div>
       </div>
