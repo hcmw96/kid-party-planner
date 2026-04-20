@@ -12,6 +12,7 @@ export interface EventFormData {
   childName: string;
   date: string;
   location: string;
+  description: string;
   organiserName: string;
   template: string;
   giftEnabled: boolean;
@@ -28,6 +29,7 @@ const CreateEvent = () => {
     childName: "",
     date: "",
     location: "",
+    description: "",
     organiserName: "",
     template: "classic_cream",
     giftEnabled: false,
@@ -68,6 +70,7 @@ const CreateEvent = () => {
           child_name: formData.childName,
           date: formData.date,
           location: formData.location,
+          description: formData.description || null,
           organiser_name: formData.organiserName,
           template: formData.template,
           gift_enabled: formData.giftEnabled,

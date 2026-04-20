@@ -121,6 +121,20 @@ const StepOne = ({ formData, updateField, onNext }: Props) => {
           />
         </div>
 
+        {/* Party details (optional) */}
+        <div className="space-y-1">
+          <label className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-sans">
+            Party details <span className="normal-case tracking-normal text-muted-foreground/60">(optional)</span>
+          </label>
+          <textarea
+            placeholder="Times, dress code, what to bring…"
+            value={formData.description}
+            onChange={(e) => updateField("description", e.target.value)}
+            rows={3}
+            className={`${inputClass(formData.description)} resize-none rounded-none`}
+          />
+        </div>
+
         {/* Organiser name */}
         <div className="space-y-1">
           <label className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-sans">
