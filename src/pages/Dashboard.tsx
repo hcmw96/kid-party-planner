@@ -9,10 +9,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import GuestList from "@/components/GuestList";
 import GiftProgress from "@/components/GiftProgress";
-import { Copy, Check, Send, Bell, LogOut, CalendarDays, MapPin } from "lucide-react";
+import { Share2, Check, Send, Bell, LogOut, CalendarDays, MapPin } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { getShareUrl } from "@/lib/shareUrl";
+import { nativeShare, haptic, isDespia } from "@/lib/despia";
 
 const Dashboard = () => {
   const { eventId } = useParams<{ eventId: string }>();
@@ -51,14 +52,18 @@ const Dashboard = () => {
     .filter((g) => g.dietary_notes)
     .map((g) => `${g.name}: ${g.dietary_notes}`);
 
-  const handleCopy = async () => {
+  const handleShare = async () => {
     try {
-      await navigator.clipboard.writeText(shareUrl);
-      setCopied(true);
-      toast.success("Link copied");
-      setTimeout(() => setCopied(false), 2000);
+      await nativeShare(`Come to ${event.child_name}'s party!`, shareUrl);
+      if (isDespia) {
+        await haptic("success");
+      } else {
+        setCopied(true);
+        toast.success("Link copied");
+        setTimeout(() => setCopied(false), 2000);
+      }
     } catch {
-      toast.error("Couldn't copy");
+      toast.error("Couldn't share");
     }
   };
 
@@ -122,9 +127,9 @@ const Dashboard = () => {
       </div>
 
       {/* Share link */}
-      <Button onClick={handleCopy} variant="outline" className="w-full justify-start gap-2">
-        {copied ? <Check className="h-4 w-4" strokeWidth={1.5} /> : <Copy className="h-4 w-4" strokeWidth={1.5} />}
-        {copied ? "Copied" : "Copy share link"}
+      <Button onClick={handleShare} variant="outline" className="w-full justify-start gap-2">
+        {!isDespia && copied ? <Check className="h-4 w-4" strokeWidth={1.5} /> : <Share2 className="h-4 w-4" strokeWidth={1.5} />}
+        {isDespia ? "Share party link" : copied ? "Copied" : "Copy link"}
       </Button>
 
       {/* Gift progress */}

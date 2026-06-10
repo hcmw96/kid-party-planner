@@ -1,3 +1,4 @@
+Initialising login role...
 export type Json =
   | string
   | number
@@ -12,8 +13,84 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "14.5"
   }
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
   public: {
     Tables: {
+      donations: {
+        Row: {
+          amount_pence: number
+          created_at: string
+          currency: string
+          donor_email: string | null
+          donor_name: string | null
+          event_id: string
+          guest_id: string | null
+          id: string
+          stripe_session_id: string | null
+        }
+        Insert: {
+          amount_pence: number
+          created_at?: string
+          currency?: string
+          donor_email?: string | null
+          donor_name?: string | null
+          event_id: string
+          guest_id?: string | null
+          id?: string
+          stripe_session_id?: string | null
+        }
+        Update: {
+          amount_pence?: number
+          created_at?: string
+          currency?: string
+          donor_email?: string | null
+          donor_name?: string | null
+          event_id?: string
+          guest_id?: string | null
+          id?: string
+          stripe_session_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "donations_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "donations_guest_id_fkey"
+            columns: ["guest_id"]
+            isOneToOne: false
+            referencedRelation: "guests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       events: {
         Row: {
           child_name: string
@@ -22,6 +99,7 @@ export type Database = {
           description: string | null
           gift_amount: number | null
           gift_enabled: boolean
+          gift_pot_total: number
           id: string
           location: string
           location_address: string | null
@@ -39,6 +117,7 @@ export type Database = {
           description?: string | null
           gift_amount?: number | null
           gift_enabled?: boolean
+          gift_pot_total?: number
           id?: string
           location: string
           location_address?: string | null
@@ -56,6 +135,7 @@ export type Database = {
           description?: string | null
           gift_amount?: number | null
           gift_enabled?: boolean
+          gift_pot_total?: number
           id?: string
           location?: string
           location_address?: string | null
@@ -76,6 +156,7 @@ export type Database = {
           email: string
           event_id: string
           id: string
+          invite_token: string
           name: string
           rsvp_status: Database["public"]["Enums"]["rsvp_status"]
           stripe_session_id: string | null
@@ -87,6 +168,7 @@ export type Database = {
           email: string
           event_id: string
           id?: string
+          invite_token?: string
           name: string
           rsvp_status?: Database["public"]["Enums"]["rsvp_status"]
           stripe_session_id?: string | null
@@ -98,6 +180,7 @@ export type Database = {
           email?: string
           event_id?: string
           id?: string
+          invite_token?: string
           name?: string
           rsvp_status?: Database["public"]["Enums"]["rsvp_status"]
           stripe_session_id?: string | null
@@ -112,12 +195,34 @@ export type Database = {
           },
         ]
       }
+      profiles: {
+        Row: {
+          created_at: string
+          id: string
+          is_admin: boolean
+        }
+        Insert: {
+          created_at?: string
+          id: string
+          is_admin?: boolean
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_admin?: boolean
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_admin_stats: { Args: never; Returns: Json }
+      increment_gift_pot: {
+        Args: { p_amount: number; p_event_id: string }
+        Returns: undefined
+      }
     }
     Enums: {
       contribution_status: "not_applicable" | "unpaid" | "paid"
@@ -247,6 +352,9 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {
       contribution_status: ["not_applicable", "unpaid", "paid"],

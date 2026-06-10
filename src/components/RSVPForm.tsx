@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Check, X, Gift } from "lucide-react";
 import type { Tables } from "@/integrations/supabase/types";
+import { haptic } from "@/lib/despia";
 
 interface Props {
   event: Tables<"events">;
@@ -46,6 +47,7 @@ const RSVPForm = ({ event }: Props) => {
       if (error) throw error;
       setGuestId(data.id);
       setSubmitted(true);
+      await haptic(attending ? "success" : "warning");
       toast.success(attending ? "See you there!" : "Thanks for letting us know");
     } catch (err: any) {
       toast.error(err.message || "Something went wrong");

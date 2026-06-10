@@ -19,7 +19,7 @@ const Login = () => {
 
   useEffect(() => {
     if (!authLoading && user) {
-      navigate("/create", { replace: true });
+      navigate("/parties", { replace: true });
     }
   }, [user, authLoading, navigate]);
 
@@ -35,7 +35,7 @@ const Login = () => {
       } else {
         const { error } = await signIn(email, password);
         if (error) throw error;
-        navigate("/create");
+        navigate("/parties");
       }
     } catch (err: any) {
       toast.error(err.message || "Something went wrong");
