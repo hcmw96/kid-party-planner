@@ -53,7 +53,7 @@ const StepOne = ({ formData, updateField, onNext }: Props) => {
       {/* Step indicator */}
       <div>
         <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-2 font-sans">
-          Step 1 of 3
+          Step 1 of 4
         </p>
         <h2 className="text-3xl font-serif italic text-foreground">Party details</h2>
       </div>
