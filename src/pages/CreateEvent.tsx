@@ -5,7 +5,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import StepOne from "@/components/EventForm/StepOne";
 import StepInvite from "@/components/EventForm/StepInvite";
-import StepTemplate from "@/components/EventForm/StepTemplate";
 import StepTwo from "@/components/EventForm/StepTwo";
 import StepThree from "@/components/EventForm/StepThree";
 
@@ -16,6 +15,12 @@ export interface EventFormData {
   description: string;
   organiserName: string;
   template: string;
+  artUrl: string | null;
+  age: string;
+  film: string;
+  food: string;
+  dreamJob: string;
+  partyType: string;
   giftEnabled: boolean;
   giftAmount: string;
 }
@@ -33,6 +38,12 @@ const CreateEvent = () => {
     description: "",
     organiserName: "",
     template: "classic_cream",
+    artUrl: null,
+    age: "",
+    film: "",
+    food: "",
+    dreamJob: "",
+    partyType: "birthday",
     giftEnabled: false,
     giftAmount: "10",
   });
@@ -74,6 +85,7 @@ const CreateEvent = () => {
           description: formData.description || null,
           organiser_name: formData.organiserName,
           template: formData.template,
+          art_url: formData.artUrl,
           gift_enabled: formData.giftEnabled,
           gift_amount: amountPence,
         })
@@ -82,7 +94,7 @@ const CreateEvent = () => {
 
       if (error) throw error;
       setEventId(data.id);
-      setStep(5);
+      setStep(4);
     } catch (err: any) {
       toast.error(err.message || "Failed to create event");
     } finally {
@@ -90,7 +102,7 @@ const CreateEvent = () => {
     }
   };
 
-  const totalSteps = 5;
+  const totalSteps = 4;
 
   return (
     <div className="h-full page-scrollable flex flex-col items-center justify-center px-6 py-12 animate-fade-in">
@@ -119,23 +131,15 @@ const CreateEvent = () => {
           />
         )}
         {step === 3 && (
-          <StepTemplate
-            formData={formData}
-            updateField={updateField}
-            onBack={() => setStep(2)}
-            onNext={() => setStep(4)}
-          />
-        )}
-        {step === 4 && (
           <StepTwo
             formData={formData}
             updateField={updateField}
-            onBack={() => setStep(3)}
+            onBack={() => setStep(2)}
             onNext={handleCreate}
             submitting={submitting}
           />
         )}
-        {step === 5 && eventId && (
+        {step === 4 && eventId && (
           <StepThree eventId={eventId} formData={formData} />
         )}
       </div>

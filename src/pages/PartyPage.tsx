@@ -49,6 +49,7 @@ const PartyPage = () => {
         date={event.date}
         location={event.location}
         description={(event as any).description}
+        artUrl={(event as any).art_url}
       />
 
       {/* Gift callout — visible before RSVP */}

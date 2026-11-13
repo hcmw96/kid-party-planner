@@ -1,4 +1,3 @@
-Initialising login role...
 export type Json =
   | string
   | number
@@ -93,6 +92,7 @@ export type Database = {
       }
       events: {
         Row: {
+          art_url: string | null
           child_name: string
           created_at: string
           date: string
@@ -111,6 +111,7 @@ export type Database = {
           title: string
         }
         Insert: {
+          art_url?: string | null
           child_name: string
           created_at?: string
           date: string
@@ -129,6 +130,7 @@ export type Database = {
           title: string
         }
         Update: {
+          art_url?: string | null
           child_name?: string
           created_at?: string
           date?: string
@@ -261,6 +263,7 @@ export type Database = {
         Args: { p_amount: number; p_event_id: string }
         Returns: undefined
       }
+      is_admin: { Args: never; Returns: boolean }
     }
     Enums: {
       contribution_status: "not_applicable" | "unpaid" | "paid"
