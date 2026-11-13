@@ -110,8 +110,11 @@ Give one whimsical, one heartfelt and one witty option.`;
     if (!res.ok) {
       const detail = await res.text();
       console.error("Anthropic API error", res.status, detail);
+      const isCredit = detail.includes("credit balance");
       const message = res.status === 401
         ? "The AI key was rejected. Check ANTHROPIC_API_KEY."
+        : isCredit
+        ? "The AI account is out of credit. Top up at console.anthropic.com."
         : res.status === 429
         ? "Too many requests just now. Try again in a moment."
         : "Could not generate invitations. Please try again.";
