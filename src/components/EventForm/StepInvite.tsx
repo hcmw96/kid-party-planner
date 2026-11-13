@@ -20,6 +20,25 @@ const underlineBase =
 const underlineIdle = "border-muted-foreground/30";
 const underlineFilled = "border-foreground";
 
+/**
+ * Pull the Edge Function's own error message out of a failed invoke.
+ * supabase-js attaches the raw Response as `context`; without reading it the
+ * user only ever sees "Edge Function returned a non-2xx status code".
+ */
+const readFunctionError = async (fnError: unknown): Promise<string> => {
+  const fallback =
+    (fnError as { message?: string })?.message ||
+    "Could not generate invitations. Please try again.";
+  const res = (fnError as { context?: Response })?.context;
+  if (!res || typeof res.json !== "function") return fallback;
+  try {
+    const body = await res.json();
+    return typeof body?.error === "string" && body.error ? body.error : fallback;
+  } catch {
+    return fallback;
+  }
+};
+
 const StepInvite = ({ formData, updateField, onBack, onNext }: Props) => {
   const [film, setFilm] = useState("");
   const [food, setFood] = useState("");
@@ -52,7 +71,10 @@ const StepInvite = ({ formData, updateField, onBack, onNext }: Props) => {
         },
       );
 
-      if (fnError) throw new Error(fnError.message);
+      // supabase-js collapses any non-2xx response into a generic
+      // "Edge Function returned a non-2xx status code" and leaves data null,
+      // so the function's own message has to be read off the response body.
+      if (fnError) throw new Error(await readFunctionError(fnError));
       if (data?.error) throw new Error(data.error);
       if (!data?.options?.length) throw new Error("No wording came back. Try again.");
 
