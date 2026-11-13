@@ -3,7 +3,10 @@
 // route through the Lovable editor preview interstitial.
 export const getShareBase = (): string => {
   const env = (import.meta.env.VITE_PUBLIC_SITE_URL as string | undefined)?.trim();
-  if (env) return env.replace(/\/$/, "");
+  // Ignore localhost bake-ins from a misconfigured Netlify env
+  if (env && !/localhost|127\.0\.0\.1/i.test(env)) {
+    return env.replace(/\/$/, "");
+  }
   if (typeof window !== "undefined") return window.location.origin;
   return "";
 };

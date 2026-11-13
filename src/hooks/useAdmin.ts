@@ -9,13 +9,9 @@ export function useIsAdmin() {
     queryKey: ["is_admin", user?.id],
     queryFn: async () => {
       if (!user) return false;
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("is_admin")
-        .eq("id", user.id)
-        .single();
+      const { data, error } = await supabase.rpc("is_admin");
       if (error) return false;
-      return data?.is_admin ?? false;
+      return Boolean(data);
     },
     enabled: !!user,
     staleTime: 60_000,

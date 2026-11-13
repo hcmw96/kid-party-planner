@@ -6,9 +6,17 @@ interface Props {
   date: string;
   location: string;
   description?: string | null;
+  artUrl?: string | null;
 }
 
-const InvitationCard = ({ template, childName, date, location, description }: Props) => {
+const InvitationCard = ({
+  template,
+  childName,
+  date,
+  location,
+  description,
+  artUrl,
+}: Props) => {
   const partyDate = new Date(date).toLocaleDateString("en-GB", {
     weekday: "long",
     day: "numeric",
@@ -17,16 +25,33 @@ const InvitationCard = ({ template, childName, date, location, description }: Pr
   });
 
   const initial = childName.charAt(0).toUpperCase();
+  const hasArt = !!artUrl;
 
   return (
     <div
-      className="w-full animate-fade-in"
+      className="w-full animate-fade-in relative overflow-hidden"
       style={{
         backgroundColor: template.palette.background,
         color: template.palette.text,
         fontFamily: template.fontFamily,
       }}
     >
+      {hasArt && (
+        <>
+          <img
+            src={artUrl}
+            alt=""
+            className="absolute inset-0 w-full h-full object-cover"
+          />
+          <div
+            className="absolute inset-0"
+            style={{
+              background: `linear-gradient(180deg, ${template.palette.background}CC 0%, ${template.palette.background}E6 45%, ${template.palette.background}F2 100%)`,
+            }}
+          />
+        </>
+      )}
+
       <div className="max-w-md mx-auto px-8 py-16 relative">
         {/* Decorative border */}
         <div
@@ -36,7 +61,7 @@ const InvitationCard = ({ template, childName, date, location, description }: Pr
 
         <div className="text-center space-y-8 relative z-10">
           {/* Monogram for classic cream */}
-          {template.id === "classic_cream" && (
+          {template.id === "classic_cream" && !hasArt && (
             <div
               className="w-16 h-16 rounded-full border-2 flex items-center justify-center mx-auto text-3xl font-display"
               style={{

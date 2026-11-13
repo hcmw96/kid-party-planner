@@ -4,7 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import StepOne from "@/components/EventForm/StepOne";
-import StepTemplate from "@/components/EventForm/StepTemplate";
+import StepInvite from "@/components/EventForm/StepInvite";
 import StepTwo from "@/components/EventForm/StepTwo";
 import StepThree from "@/components/EventForm/StepThree";
 
@@ -15,6 +15,12 @@ export interface EventFormData {
   description: string;
   organiserName: string;
   template: string;
+  artUrl: string | null;
+  age: string;
+  film: string;
+  food: string;
+  dreamJob: string;
+  partyType: string;
   giftEnabled: boolean;
   giftAmount: string;
 }
@@ -32,6 +38,12 @@ const CreateEvent = () => {
     description: "",
     organiserName: "",
     template: "classic_cream",
+    artUrl: null,
+    age: "",
+    film: "",
+    food: "",
+    dreamJob: "",
+    partyType: "birthday",
     giftEnabled: false,
     giftAmount: "10",
   });
@@ -73,6 +85,7 @@ const CreateEvent = () => {
           description: formData.description || null,
           organiser_name: formData.organiserName,
           template: formData.template,
+          art_url: formData.artUrl,
           gift_enabled: formData.giftEnabled,
           gift_amount: amountPence,
         })
@@ -110,7 +123,7 @@ const CreateEvent = () => {
           <StepOne formData={formData} updateField={updateField} onNext={() => setStep(2)} />
         )}
         {step === 2 && (
-          <StepTemplate
+          <StepInvite
             formData={formData}
             updateField={updateField}
             onBack={() => setStep(1)}

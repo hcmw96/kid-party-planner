@@ -2,6 +2,11 @@
   command = "npm run build"
   publish = "dist"
 
+# Vite bakes these in at build time. Keep the full hostname including ".co".
+[build.environment]
+  VITE_SUPABASE_URL = "https://gbkfxfqjavvojewjwkvq.supabase.co"
+  VITE_PUBLIC_SITE_URL = "https://partypalapp.netlify.app"
+
 [[redirects]]
   from = "/*"
   to = "/index.html"

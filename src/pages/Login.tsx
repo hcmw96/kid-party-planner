@@ -29,9 +29,14 @@ const Login = () => {
 
     try {
       if (isSignUp) {
-        const { error } = await signUp(email, password);
+        const { data, error } = await signUp(email, password);
         if (error) throw error;
-        toast.success("Account created. Check your email to confirm.");
+        if (data.session) {
+          toast.success("Account created");
+          navigate("/parties");
+        } else {
+          toast.success("Account created. Check your email to confirm.");
+        }
       } else {
         const { error } = await signIn(email, password);
         if (error) throw error;

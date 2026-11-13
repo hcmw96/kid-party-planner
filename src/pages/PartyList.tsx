@@ -10,7 +10,7 @@ const PartyList = () => {
   const { user, loading: authLoading, signOut } = useAuth();
   const navigate = useNavigate();
 
-  const { data: events = [], isLoading } = useQuery({
+  const { data: events = [], isLoading, isError, error, refetch } = useQuery({
     queryKey: ["events", user?.id],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -22,9 +22,15 @@ const PartyList = () => {
       return data;
     },
     enabled: !!user,
+    retry: 1,
   });
 
-  if (authLoading || isLoading) {
+  if (!authLoading && !user) {
+    navigate("/login", { replace: true });
+    return null;
+  }
+
+  if (authLoading || (user && isLoading)) {
     return (
       <div className="min-h-screen px-6 py-10 max-w-lg mx-auto space-y-4">
         <Skeleton className="h-8 w-40" />
@@ -34,9 +40,23 @@ const PartyList = () => {
     );
   }
 
-  if (!user) {
-    navigate("/login");
-    return null;
+  if (isError) {
+    return (
+      <div className="h-full page-scrollable px-6 py-10 max-w-lg mx-auto space-y-6 animate-fade-in">
+        <span className="text-sm font-serif font-semibold tracking-[0.3em] uppercase text-foreground">
+          PartyPal
+        </span>
+        <div className="text-center py-16 space-y-4">
+          <p className="text-muted-foreground text-sm">
+            Couldn’t load your parties.
+          </p>
+          <p className="text-xs text-muted-foreground/80 font-sans">
+            {error instanceof Error ? error.message : "Something went wrong"}
+          </p>
+          <Button onClick={() => refetch()}>Try again</Button>
+        </div>
+      </div>
+    );
   }
 
   const handleSignOut = async () => {
