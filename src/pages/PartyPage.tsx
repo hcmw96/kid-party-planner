@@ -3,6 +3,7 @@ import { useEvent } from "@/hooks/useEvent";
 import { getTemplate } from "@/lib/templates";
 import InvitationCard from "@/components/InvitationCard";
 import RSVPForm from "@/components/RSVPForm";
+import EventThread from "@/components/EventThread";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Gift } from "lucide-react";
 
@@ -76,6 +77,11 @@ const PartyPage = () => {
       {/* RSVP Form — base UI below the card */}
       <div id="rsvp-form" className="px-6 py-10 max-w-md mx-auto">
         <RSVPForm event={event} />
+      </div>
+
+      {/* Event thread — keeps the party live after the RSVP */}
+      <div className="px-6 pb-12 max-w-md mx-auto border-t border-border pt-10">
+        <EventThread eventId={event.id} />
       </div>
     </div>
   );

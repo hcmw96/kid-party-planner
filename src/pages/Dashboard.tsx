@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import GuestList from "@/components/GuestList";
 import GiftProgress from "@/components/GiftProgress";
+import EventThread from "@/components/EventThread";
 import { Share2, Check, Send, Bell, LogOut, CalendarDays, MapPin } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -181,6 +182,17 @@ const Dashboard = () => {
               <Bell className="h-4 w-4 mr-1" strokeWidth={1.5} /> Nudge
             </Button>
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Event thread — the live conversation with guests */}
+      <Card>
+        <CardContent className="pt-6">
+          <EventThread
+            eventId={event.id}
+            isHost
+            defaultName={event.organiser_name}
+          />
         </CardContent>
       </Card>
     </div>

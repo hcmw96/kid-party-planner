@@ -195,6 +195,44 @@ export type Database = {
           },
         ]
       }
+      messages: {
+        Row: {
+          author_name: string
+          author_type: string
+          content: string
+          created_at: string
+          event_id: string
+          id: string
+          pinned: boolean
+        }
+        Insert: {
+          author_name: string
+          author_type: string
+          content: string
+          created_at?: string
+          event_id: string
+          id?: string
+          pinned?: boolean
+        }
+        Update: {
+          author_name?: string
+          author_type?: string
+          content?: string
+          created_at?: string
+          event_id?: string
+          id?: string
+          pinned?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string
