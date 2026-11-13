@@ -15,7 +15,7 @@ const StepTemplate = ({ formData, updateField, onBack, onNext }: Props) => {
     <div className="space-y-8">
       <div>
         <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-2 font-sans">
-          Step 2 of 3
+          Step 3 of 4
         </p>
         <h2 className="text-3xl font-serif italic text-foreground">Choose your invitation</h2>
       </div>
