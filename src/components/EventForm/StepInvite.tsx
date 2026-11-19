@@ -1,11 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { templates } from "@/lib/templates";
-import InvitationPreview from "@/components/InvitationPreview";
-import type { EventFormData } from "@/pages/CreateEvent";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
-import { Loader2, Sparkles } from "lucide-react";
+import type { EventFormData } from "@/pages/CreateEvent";
 
 interface Props {
   formData: EventFormData;
@@ -14,325 +10,228 @@ interface Props {
   onNext: () => void;
 }
 
+interface InviteOption {
+  tone: string;
+  text: string;
+}
+
 const underlineBase =
   "w-full border-0 border-b bg-transparent px-0 py-2 text-base text-foreground placeholder:text-muted-foreground/50 focus:outline-none transition-colors duration-200 font-sans";
 const underlineIdle = "border-muted-foreground/30";
 const underlineFilled = "border-foreground";
 
-const StepInvite = ({ formData, updateField, onBack, onNext }: Props) => {
-  const [wordingOptions, setWordingOptions] = useState<string[]>([]);
-  const [wordingLoading, setWordingLoading] = useState(false);
-  const [artLoading, setArtLoading] = useState(false);
-  const [artCaption, setArtCaption] = useState<string | null>(null);
-  const [lastArtUrl, setLastArtUrl] = useState<string | null>(formData.artUrl);
+/**
+ * Pull the Edge Function's own error message out of a failed invoke.
+ * supabase-js attaches the raw Response as `context`; without reading it the
+ * user only ever sees "Edge Function returned a non-2xx status code".
+ */
+const readFunctionError = async (fnError: unknown): Promise<string> => {
+  const fallback =
+    (fnError as { message?: string })?.message ||
+    "Could not generate invitations. Please try again.";
+  const res = (fnError as { context?: Response })?.context;
+  if (!res || typeof res.json !== "function") return fallback;
+  try {
+    const body = await res.json();
+    return typeof body?.error === "string" && body.error ? body.error : fallback;
+  } catch {
+    return fallback;
+  }
+};
 
-  const promptsReady =
-    !!formData.film.trim() && !!formData.food.trim() && !!formData.dreamJob.trim();
+const StepInvite = ({ formData, updateField, onBack, onNext }: Props) => {
+  const [options, setOptions] = useState<InviteOption[]>([]);
+  const [selected, setSelected] = useState<number | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const firstName = formData.childName?.trim() || "them";
+  const canGenerate = Boolean(
+    formData.film.trim() && formData.food.trim() && formData.dreamJob.trim(),
+  );
 
   const inputClass = (value: string) =>
     `${underlineBase} ${value ? underlineFilled : underlineIdle}`;
 
-  const invokeErrorMessage = async (error: { message: string }, data: unknown) => {
-    if (data && typeof data === "object" && "error" in data) {
-      const msg = (data as { error?: unknown }).error;
-      if (typeof msg === "string" && msg.trim()) return msg;
-    }
-    return error.message || "Something went wrong";
-  };
-
-  const generateArt = async () => {
-    if (!promptsReady) {
-      toast.error("Add favourite film, food and dream job first");
-      return;
-    }
-    setArtLoading(true);
+  const generate = async () => {
+    setLoading(true);
+    setError(null);
     try {
-      const { data, error } = await supabase.functions.invoke("generate-invite-art", {
-        body: {
-          childName: formData.childName,
-          age: formData.age,
-          film: formData.film,
-          food: formData.food,
-          dreamJob: formData.dreamJob,
-          partyType: formData.partyType,
+      const { data, error: fnError } = await supabase.functions.invoke(
+        "generate-invite",
+        {
+          body: {
+            childName: formData.childName,
+            age: formData.age,
+            film: formData.film,
+            food: formData.food,
+            dreamJob: formData.dreamJob,
+            partyType: "kids",
+          },
         },
-      });
-      if (error) throw new Error(await invokeErrorMessage(error, data));
-      const payload = data as {
-        art_url?: string;
-        art_direction?: { caption?: string };
-        error?: string;
-      } | null;
-      if (payload?.error) throw new Error(payload.error);
-      if (!payload?.art_url) throw new Error("No artwork returned");
-      setLastArtUrl(payload.art_url);
-      updateField("artUrl", payload.art_url);
-      setArtCaption(payload.art_direction?.caption ?? "Custom artwork");
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Couldn’t generate artwork");
+      );
+
+      if (fnError) throw new Error(await readFunctionError(fnError));
+      if (data?.error) throw new Error(data.error);
+      if (!data?.options?.length) throw new Error("No wording came back. Try again.");
+
+      setOptions(data.options);
+      setSelected(null);
+    } catch (err: unknown) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Could not generate invitations. Please try again.",
+      );
     } finally {
-      setArtLoading(false);
+      setLoading(false);
     }
   };
 
-  const generateWording = async () => {
-    if (!promptsReady) {
-      toast.error("Add favourite film, food and dream job first");
-      return;
-    }
-    setWordingLoading(true);
-    try {
-      const { data, error } = await supabase.functions.invoke("generate-invite", {
-        body: {
-          childName: formData.childName,
-          age: formData.age,
-          film: formData.film,
-          food: formData.food,
-          dreamJob: formData.dreamJob,
-          partyType: formData.partyType,
-        },
-      });
-      if (error) throw new Error(await invokeErrorMessage(error, data));
-      const options = (data as { options?: string[] } | null)?.options ?? [];
-      if (!options.length) throw new Error("No wording options returned");
-      setWordingOptions(options);
-      if (!formData.description) {
-        updateField("description", options[0]);
-      }
-      // Wording returns first; kick off a single art option in the background.
-      void generateArt();
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Couldn’t generate wording");
-    } finally {
-      setWordingLoading(false);
-    }
+  const choose = (index: number) => {
+    setSelected(index);
+    updateField("description", options[index].text);
   };
-
-  const selectTemplate = (templateId: string) => {
-    updateField("template", templateId);
-    updateField("artUrl", null);
-  };
-
-  const selectGeneratedArt = () => {
-    if (!lastArtUrl) return;
-    updateField("artUrl", lastArtUrl);
-  };
-
-  const previewArtUrl = formData.artUrl ?? lastArtUrl;
 
   return (
     <div className="space-y-8">
       <div>
         <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-2 font-sans">
-          Step 2 of 3
+          Step 2 of 4
         </p>
-        <h2 className="text-3xl font-serif italic text-foreground">Invitation</h2>
-        <p className="text-muted-foreground mt-2 text-sm font-sans">
-          Three answers shape the wording — and, if you like, the artwork.
+        <h2 className="text-3xl font-serif italic text-foreground">
+          Write the invitation
+        </h2>
+        <p className="mt-3 text-sm text-muted-foreground font-sans leading-relaxed">
+          Tell us three things about {firstName} and we will write the wording
+          for you. You can edit it afterwards.
         </p>
       </div>
 
-      <div className="space-y-5">
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-1">
-            <label className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-sans">
-              Age
-            </label>
-            <input
-              inputMode="numeric"
-              placeholder="7"
-              value={formData.age}
-              onChange={(e) => updateField("age", e.target.value)}
-              className={inputClass(formData.age)}
-            />
-          </div>
-          <div className="space-y-1">
-            <label className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-sans">
-              Party type
-            </label>
-            <select
-              value={formData.partyType}
-              onChange={(e) => updateField("partyType", e.target.value)}
-              className={`${underlineBase} ${underlineFilled} appearance-none rounded-none`}
-            >
-              <option value="birthday">Birthday</option>
-              <option value="celebration">Celebration</option>
-              <option value="playdate">Playdate</option>
-            </select>
-          </div>
-        </div>
-
+      <div className="space-y-6">
         <div className="space-y-1">
           <label className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-sans">
             Favourite film
           </label>
           <input
-            placeholder="e.g. a classic adventure"
+            placeholder="A classic adventure"
             value={formData.film}
             onChange={(e) => updateField("film", e.target.value)}
             className={inputClass(formData.film)}
           />
         </div>
+
         <div className="space-y-1">
           <label className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-sans">
             Favourite food
           </label>
           <input
-            placeholder="e.g. strawberries"
+            placeholder="Spaghetti"
             value={formData.food}
             onChange={(e) => updateField("food", e.target.value)}
             className={inputClass(formData.food)}
           />
         </div>
+
         <div className="space-y-1">
           <label className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-sans">
             Dream job
           </label>
           <input
-            placeholder="e.g. astronaut"
+            placeholder="Astronaut"
             value={formData.dreamJob}
             onChange={(e) => updateField("dreamJob", e.target.value)}
             className={inputClass(formData.dreamJob)}
           />
         </div>
-
-        <Button
-          type="button"
-          variant="outline"
-          className="w-full"
-          size="lg"
-          disabled={!promptsReady || wordingLoading}
-          onClick={generateWording}
-        >
-          {wordingLoading ? (
-            <>
-              <Loader2 className="h-4 w-4 animate-spin mr-2" strokeWidth={1.5} />
-              Writing invitations…
-            </>
-          ) : (
-            <>
-              <Sparkles className="h-4 w-4 mr-2" strokeWidth={1.5} />
-              Generate wording
-            </>
-          )}
-        </Button>
       </div>
 
-      {wordingOptions.length > 0 && (
-        <div className="space-y-3">
-          <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-sans">
-            Choose wording
+      <div>
+        <Button
+          variant="outline"
+          onClick={generate}
+          disabled={!canGenerate || loading}
+          className="w-full uppercase tracking-[0.15em]"
+          size="lg"
+        >
+          {loading
+            ? "Writing…"
+            : options.length
+              ? "Try again"
+              : "Generate wording"}
+        </Button>
+        {error && (
+          <p className="mt-3 text-center text-xs text-destructive font-sans">
+            {error}
           </p>
-          {wordingOptions.map((option) => {
-            const selected = formData.description === option;
-            return (
-              <button
-                key={option}
-                type="button"
-                onClick={() => updateField("description", option)}
-                className={`w-full text-left rounded-lg border px-4 py-3 text-sm font-sans leading-relaxed transition-all ${
-                  selected
-                    ? "border-foreground bg-card ring-1 ring-foreground"
-                    : "border-border/60 hover:border-foreground/40"
-                }`}
-              >
-                {option}
-              </button>
-            );
-          })}
+        )}
+      </div>
+
+      {loading && !options.length && (
+        <div className="space-y-3">
+          {[0, 1, 2].map((i) => (
+            <div
+              key={i}
+              className="rounded-lg border border-muted-foreground/20 p-5 space-y-2"
+            >
+              <div className="h-2 w-20 rounded bg-muted animate-pulse" />
+              <div className="h-3 w-full rounded bg-muted animate-pulse" />
+              <div className="h-3 w-5/6 rounded bg-muted animate-pulse" />
+            </div>
+          ))}
         </div>
       )}
 
-      <div className="space-y-3">
-        <div>
-          <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-sans mb-1">
-            Design
-          </p>
-          <p className="text-xs text-muted-foreground font-sans">
-            Hand-designed templates are the default. Artwork is optional.
-          </p>
-        </div>
-
-        {templates.map((template) => (
-          <InvitationPreview
-            key={template.id}
-            template={template}
-            childName={formData.childName}
-            selected={formData.template === template.id && !formData.artUrl}
-            onSelect={() => selectTemplate(template.id)}
-          />
-        ))}
-
-        <div
-          className={`rounded-lg overflow-hidden border transition-all ${
-            formData.artUrl
-              ? "ring-2 ring-foreground ring-offset-2 ring-offset-background border-transparent"
-              : "border-border/60"
-          }`}
-        >
-          <button
-            type="button"
-            className="w-full text-left"
-            onClick={selectGeneratedArt}
-            disabled={!lastArtUrl}
-          >
-            <div className="aspect-[16/9] relative bg-muted/40 flex items-center justify-center overflow-hidden">
-              {previewArtUrl ? (
-                <img
-                  src={previewArtUrl}
-                  alt={artCaption ?? "Generated invitation artwork"}
-                  className="absolute inset-0 w-full h-full object-cover"
-                />
-              ) : (
-                <div className="px-6 text-center space-y-2">
-                  <Sparkles className="h-5 w-5 mx-auto text-muted-foreground" strokeWidth={1.5} />
-                  <p className="text-sm font-sans text-muted-foreground">
-                    {artLoading
-                      ? "Painting a background…"
-                      : "Generate a custom background from the same answers"}
-                  </p>
-                </div>
-              )}
-              {artLoading && (
-                <div className="absolute inset-0 bg-background/50 flex items-center justify-center">
-                  <Loader2 className="h-6 w-6 animate-spin text-foreground" strokeWidth={1.5} />
-                </div>
-              )}
-            </div>
-          </button>
-          <div className="px-4 py-3 bg-card flex items-center justify-between gap-3">
-            <div className="min-w-0">
-              <p className="font-sans text-sm font-medium text-foreground">AI artwork</p>
-              <p className="font-sans text-xs text-muted-foreground truncate">
-                {artCaption ?? "Abstract background · one option at a time"}
-              </p>
-            </div>
-            <Button
+      {options.length > 0 && (
+        <div className="space-y-3">
+          {options.map((option, i) => (
+            <button
+              key={i}
               type="button"
-              variant="outline"
-              size="sm"
-              disabled={!promptsReady || artLoading}
-              onClick={generateArt}
+              onClick={() => choose(i)}
+              className={`w-full text-left rounded-lg border p-5 transition-all duration-200 ${
+                selected === i
+                  ? "border-foreground bg-foreground/[0.03]"
+                  : "border-muted-foreground/20 hover:border-muted-foreground/40"
+              }`}
             >
-              {artLoading ? "Working…" : lastArtUrl ? "Try another" : "Generate"}
-            </Button>
-          </div>
+              <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-sans mb-2">
+                {option.tone}
+              </p>
+              <p className="font-serif text-base leading-relaxed text-foreground">
+                {option.text}
+              </p>
+            </button>
+          ))}
         </div>
-      </div>
+      )}
+
+      {selected !== null && (
+        <div className="space-y-1">
+          <label className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-sans">
+            Edit the wording
+          </label>
+          <textarea
+            value={formData.description}
+            onChange={(e) => updateField("description", e.target.value)}
+            rows={4}
+            className={`${inputClass(formData.description)} resize-none rounded-none font-serif`}
+          />
+        </div>
+      )}
 
       <div className="flex gap-3">
         <Button variant="outline" onClick={onBack} className="flex-1" size="lg">
           Back
         </Button>
-        <Button
-          onClick={onNext}
-          disabled={!formData.template}
-          className="flex-1 uppercase tracking-[0.15em]"
-          size="lg"
-        >
+        <Button onClick={onNext} className="flex-1 uppercase tracking-[0.15em]" size="lg">
           Continue
         </Button>
       </div>
+
+      <p className="text-center text-[11px] text-muted-foreground font-sans">
+        Skip this step and the wording you typed earlier is kept
+      </p>
     </div>
   );
 };

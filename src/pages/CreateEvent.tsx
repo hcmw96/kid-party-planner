@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import StepOne from "@/components/EventForm/StepOne";
 import StepInvite from "@/components/EventForm/StepInvite";
+import StepTemplate from "@/components/EventForm/StepTemplate";
 import StepTwo from "@/components/EventForm/StepTwo";
 import StepThree from "@/components/EventForm/StepThree";
 
@@ -94,7 +95,7 @@ const CreateEvent = () => {
 
       if (error) throw error;
       setEventId(data.id);
-      setStep(4);
+      setStep(5);
     } catch (err: any) {
       toast.error(err.message || "Failed to create event");
     } finally {
@@ -102,7 +103,7 @@ const CreateEvent = () => {
     }
   };
 
-  const totalSteps = 4;
+  const totalSteps = 5;
 
   return (
     <div className="h-full page-scrollable flex flex-col items-center justify-center px-6 py-12 animate-fade-in">
@@ -131,15 +132,23 @@ const CreateEvent = () => {
           />
         )}
         {step === 3 && (
-          <StepTwo
+          <StepTemplate
             formData={formData}
             updateField={updateField}
             onBack={() => setStep(2)}
+            onNext={() => setStep(4)}
+          />
+        )}
+        {step === 4 && (
+          <StepTwo
+            formData={formData}
+            updateField={updateField}
+            onBack={() => setStep(3)}
             onNext={handleCreate}
             submitting={submitting}
           />
         )}
-        {step === 4 && eventId && (
+        {step === 5 && eventId && (
           <StepThree eventId={eventId} formData={formData} />
         )}
       </div>

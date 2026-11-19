@@ -1,22 +1,45 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
-const MODEL = "gpt-4.1-mini";
+const MODEL = Deno.env.get("OPENAI_INVITE_MODEL") ?? "gpt-4.1-mini";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
-type InviteInput = {
+const json = (body: unknown, status = 200) =>
+  new Response(JSON.stringify(body), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+
+interface Payload {
   childName?: string;
   age?: string | number;
   film?: string;
   food?: string;
   dreamJob?: string;
-  partyType?: string;
-};
+  partyType?: "kids" | "adult" | string;
+}
+
+const SYSTEM_PROMPT =
+  `You write short party invitation blurbs for PartyPal, a British party invitation app used mainly by parents at UK preparatory schools.
+
+House style:
+- British English spelling throughout.
+- Warm, elegant, lightly witty. Never garish, never twee, no exclamation-mark spam.
+- One exclamation mark maximum across the whole blurb, and usually none.
+- 25 to 45 words. This sits on an invitation card, so it must breathe.
+- Reference the three details naturally. Do not list them, do not label them, and never write them as "favourite film: X".
+- No emoji. No hashtags. No "Join us as we celebrate" boilerplate.
+- Do not state the date, time or venue. Those are printed separately on the card.
+- Do not name copyrighted characters or franchises; use mood and theme instead.
+
+Return ONLY a JSON object of this exact shape, with no prose before or after and no markdown fences:
+{"options":[{"tone":"whimsical","text":"..."},{"tone":"heartfelt","text":"..."},{"tone":"witty","text":"..."}]}`;
 
 function readableApiError(status: number, body: string): string {
   const lower = body.toLowerCase();
@@ -31,12 +54,12 @@ function readableApiError(status: number, body: string): string {
     return "AI credits are exhausted. Top up the OpenAI account and try again.";
   }
   if (status === 401 || status === 403) {
-    return "Invite generation is not configured correctly. Check OPENAI_API_KEY.";
+    return "The AI key was rejected. Check OPENAI_API_KEY.";
   }
   if (status === 429) {
-    return "Too many requests. Please wait a moment and try again.";
+    return "Too many requests just now. Try again in a moment.";
   }
-  return "Couldn’t generate invitation wording. Please try again.";
+  return "Could not generate invitations. Please try again.";
 }
 
 serve(async (req) => {
@@ -44,47 +67,50 @@ serve(async (req) => {
     return new Response("ok", { headers: corsHeaders });
   }
 
+  if (req.method !== "POST") {
+    return json({ error: "Method not allowed" }, 405);
+  }
+
+  if (!OPENAI_API_KEY) {
+    console.error("OPENAI_API_KEY is not set");
+    return json({ error: "Invite generation is not configured yet." }, 500);
+  }
+
+  let payload: Payload;
   try {
-    if (!OPENAI_API_KEY) {
-      return new Response(
-        JSON.stringify({ error: "OPENAI_API_KEY is not configured." }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-      );
-    }
+    payload = await req.json();
+  } catch {
+    return json({ error: "Invalid JSON body" }, 400);
+  }
 
-    const body = (await req.json()) as InviteInput;
-    const childName = (body.childName ?? "").trim();
-    const age = String(body.age ?? "").trim();
-    const film = (body.film ?? "").trim();
-    const food = (body.food ?? "").trim();
-    const dreamJob = (body.dreamJob ?? "").trim();
-    const partyType = (body.partyType ?? "birthday").trim() || "birthday";
+  const { childName, age, film, food, dreamJob, partyType = "kids" } = payload;
 
-    if (!childName || !film || !food || !dreamJob) {
-      return new Response(
-        JSON.stringify({
-          error: "childName, film, food and dreamJob are required.",
-        }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-      );
-    }
+  if (!film?.trim() || !food?.trim() || !dreamJob?.trim()) {
+    return json(
+      { error: "Please fill in all three answers before generating." },
+      400,
+    );
+  }
 
-    const system = `You write short children's party invitation copy for UK parents.
-Tone: warm, polished, Paperless Post — never cutesy, never slang-heavy.
-Return ONLY valid JSON with this shape:
-{"options":["...","...","..."]}
-Exactly three options. Each option is 2–4 short sentences, no titles, no emoji.
-Gently weave the child's interests as atmosphere, not a shopping list.
-Do not name copyrighted characters or franchises; use mood and theme instead.`;
+  const isAdult = partyType === "adult";
+  const who =
+    childName?.trim() || (isAdult ? "the host" : "the birthday child");
+  const ageLine = age ? `\nThey are turning ${age}.` : "";
 
-    const user = `Write three invitation wording options.
-Child: ${childName}${age ? ` (age ${age})` : ""}
-Party type: ${partyType}
-Favourite film: ${film}
-Favourite food: ${food}
-Dream job: ${dreamJob}`;
+  const userPrompt =
+    `Write three invitation blurbs for ${who}'s ${
+      isAdult ? "birthday party (adult guests)" : "children's birthday party"
+    }.${ageLine}
 
-    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+Three things about them:
+- Favourite film: ${film.trim()}
+- Favourite food: ${food.trim()}
+- Dream job: ${dreamJob.trim()}
+
+Give one whimsical, one heartfelt and one witty option.`;
+
+  try {
+    const res = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
         Authorization: `Bearer ${OPENAI_API_KEY}`,
@@ -92,66 +118,62 @@ Dream job: ${dreamJob}`;
       },
       body: JSON.stringify({
         model: MODEL,
-        temperature: 0.8,
+        temperature: 0.9,
         response_format: { type: "json_object" },
         messages: [
-          { role: "system", content: system },
-          { role: "user", content: user },
+          { role: "system", content: SYSTEM_PROMPT },
+          { role: "user", content: userPrompt },
         ],
       }),
     });
 
-    const raw = await response.text();
-    if (!response.ok) {
-      console.error("OpenAI error", response.status, raw);
-      return new Response(
-        JSON.stringify({ error: readableApiError(response.status, raw) }),
-        {
-          status: response.status >= 500 ? 502 : response.status,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        },
-      );
+    const detail = await res.text();
+    if (!res.ok) {
+      console.error("OpenAI API error", res.status, detail);
+      return json({ error: readableApiError(res.status, detail) }, 502);
     }
 
-    const payload = JSON.parse(raw) as {
+    const data = JSON.parse(detail) as {
       choices?: Array<{ message?: { content?: string } }>;
     };
-    const text = payload.choices?.[0]?.message?.content ?? "";
-    let parsed: { options?: unknown };
+    const raw = data?.choices?.[0]?.message?.content ?? "";
+
+    let parsed: { options?: { tone: string; text: string }[] };
     try {
-      parsed = JSON.parse(text) as { options?: unknown };
+      parsed = JSON.parse(raw);
     } catch {
-      return new Response(
-        JSON.stringify({ error: "Invite model returned an unexpected response." }),
-        { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      const match = raw.match(/\{[\s\S]*\}/);
+      if (!match) {
+        console.error("Unparseable model output", raw.slice(0, 500));
+        return json(
+          { error: "Could not generate invitations. Please try again." },
+          502,
+        );
+      }
+      parsed = JSON.parse(match[0]);
+    }
+
+    const options = (parsed.options ?? [])
+      .filter((o) => o && typeof o.text === "string" && o.text.trim())
+      .slice(0, 3)
+      .map((o) => ({
+        tone: String(o.tone ?? "option"),
+        text: o.text.trim(),
+      }));
+
+    if (!options.length) {
+      return json(
+        { error: "Could not generate invitations. Please try again." },
+        502,
       );
     }
 
-    const options = Array.isArray(parsed.options)
-      ? parsed.options
-          .filter((o): o is string => typeof o === "string" && o.trim().length > 0)
-          .map((o) => o.trim())
-          .slice(0, 3)
-      : [];
-
-    if (options.length < 1) {
-      return new Response(
-        JSON.stringify({ error: "Invite model returned no wording options." }),
-        { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-      );
-    }
-
-    return new Response(JSON.stringify({ options }), {
-      status: 200,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return json({ options });
   } catch (err) {
-    console.error(err);
-    return new Response(
-      JSON.stringify({
-        error: err instanceof Error ? err.message : "Invite generation failed.",
-      }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+    console.error("generate-invite failed", err);
+    return json(
+      { error: "Could not generate invitations. Please try again." },
+      500,
     );
   }
 });
