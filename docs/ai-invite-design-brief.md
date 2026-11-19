@@ -6,7 +6,7 @@ what it says. Text generation already exists and stays.
 
 ## What exists today
 
-- `supabase/functions/generate-invite/` calls Anthropic and returns three
+- `supabase/functions/generate-invite/` calls OpenAI and returns three
   wording options. Deployed and working, blocked only on account credit.
 - `src/components/EventForm/StepInvite.tsx` is step 2 of the create flow. It
   collects the three answers and writes the chosen wording into

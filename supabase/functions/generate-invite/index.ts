@@ -1,7 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
-const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
-const MODEL = "claude-haiku-4-5-20251001";
+const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
+const MODEL = "gpt-4.1-mini";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -25,12 +25,13 @@ function readableApiError(status: number, body: string): string {
     lower.includes("credit") ||
     lower.includes("billing") ||
     lower.includes("insufficient") ||
-    lower.includes("quota")
+    lower.includes("quota") ||
+    lower.includes("exceeded your current quota")
   ) {
-    return "AI credits are exhausted. Top up the Anthropic account and try again.";
+    return "AI credits are exhausted. Top up the OpenAI account and try again.";
   }
   if (status === 401 || status === 403) {
-    return "Invite generation is not configured correctly. Check ANTHROPIC_API_KEY.";
+    return "Invite generation is not configured correctly. Check OPENAI_API_KEY.";
   }
   if (status === 429) {
     return "Too many requests. Please wait a moment and try again.";
@@ -44,9 +45,9 @@ serve(async (req) => {
   }
 
   try {
-    if (!ANTHROPIC_API_KEY) {
+    if (!OPENAI_API_KEY) {
       return new Response(
-        JSON.stringify({ error: "ANTHROPIC_API_KEY is not configured." }),
+        JSON.stringify({ error: "OPENAI_API_KEY is not configured." }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
@@ -83,24 +84,26 @@ Favourite film: ${film}
 Favourite food: ${food}
 Dream job: ${dreamJob}`;
 
-    const response = await fetch("https://api.anthropic.com/v1/messages", {
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
+        Authorization: `Bearer ${OPENAI_API_KEY}`,
         "Content-Type": "application/json",
-        "x-api-key": ANTHROPIC_API_KEY,
-        "anthropic-version": "2023-06-01",
       },
       body: JSON.stringify({
         model: MODEL,
-        max_tokens: 800,
-        system,
-        messages: [{ role: "user", content: user }],
+        temperature: 0.8,
+        response_format: { type: "json_object" },
+        messages: [
+          { role: "system", content: system },
+          { role: "user", content: user },
+        ],
       }),
     });
 
     const raw = await response.text();
     if (!response.ok) {
-      console.error("Anthropic error", response.status, raw);
+      console.error("OpenAI error", response.status, raw);
       return new Response(
         JSON.stringify({ error: readableApiError(response.status, raw) }),
         {
@@ -111,20 +114,22 @@ Dream job: ${dreamJob}`;
     }
 
     const payload = JSON.parse(raw) as {
-      content?: Array<{ type: string; text?: string }>;
+      choices?: Array<{ message?: { content?: string } }>;
     };
-    const text = payload.content?.find((c) => c.type === "text")?.text ?? "";
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) {
+    const text = payload.choices?.[0]?.message?.content ?? "";
+    let parsed: { options?: unknown };
+    try {
+      parsed = JSON.parse(text) as { options?: unknown };
+    } catch {
       return new Response(
         JSON.stringify({ error: "Invite model returned an unexpected response." }),
         { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
 
-    const parsed = JSON.parse(jsonMatch[0]) as { options?: unknown };
     const options = Array.isArray(parsed.options)
-      ? parsed.options.filter((o): o is string => typeof o === "string" && o.trim().length > 0)
+      ? parsed.options
+          .filter((o): o is string => typeof o === "string" && o.trim().length > 0)
           .map((o) => o.trim())
           .slice(0, 3)
       : [];
