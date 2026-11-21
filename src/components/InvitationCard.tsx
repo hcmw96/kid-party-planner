@@ -29,7 +29,9 @@ const InvitationCard = ({
 
   return (
     <div
-      className="w-full animate-fade-in relative overflow-hidden"
+      className={`w-full animate-fade-in relative overflow-hidden ${
+        hasArt ? "min-h-[78vh] flex items-center px-5 py-14" : ""
+      }`}
       style={{
         backgroundColor: template.palette.background,
         color: template.palette.text,
@@ -38,21 +40,32 @@ const InvitationCard = ({
     >
       {hasArt && (
         <>
+          {/* Artwork shows at full strength around the edges */}
           <img
             src={artUrl}
             alt=""
             className="absolute inset-0 w-full h-full object-cover"
           />
+          {/* Gentle fade into the RSVP section below */}
           <div
-            className="absolute inset-0"
+            className="absolute inset-x-0 bottom-0 h-24"
             style={{
-              background: `linear-gradient(180deg, ${template.palette.background}CC 0%, ${template.palette.background}E6 45%, ${template.palette.background}F2 100%)`,
+              background: `linear-gradient(180deg, transparent 0%, ${template.palette.background}99 100%)`,
             }}
           />
         </>
       )}
 
-      <div className="max-w-md mx-auto px-8 py-16 relative">
+      <div
+        className={`max-w-md mx-auto relative w-full ${
+          hasArt ? "px-8 py-14 rounded-sm backdrop-blur-[2px] shadow-sm" : "px-8 py-16"
+        }`}
+        style={
+          hasArt
+            ? { backgroundColor: template.palette.background + "E0" }
+            : undefined
+        }
+      >
         {/* Decorative border */}
         <div
           className="absolute inset-6 border"

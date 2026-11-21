@@ -6,6 +6,7 @@ import type { EventFormData } from "@/pages/CreateEvent";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Loader2, Sparkles } from "lucide-react";
+import { parseArtTheme, type ArtTheme } from "@/lib/artTheme";
 
 interface Props {
   formData: EventFormData;
@@ -32,6 +33,7 @@ const StepTemplate = ({ formData, updateField, onBack, onNext }: Props) => {
   const [artLoading, setArtLoading] = useState(false);
   const [artCaption, setArtCaption] = useState<string | null>(null);
   const [lastArtUrl, setLastArtUrl] = useState<string | null>(formData.artUrl);
+  const [lastArtTheme, setLastArtTheme] = useState<ArtTheme | null>(formData.artTheme);
 
   const promptsReady = Boolean(
     formData.film.trim() && formData.food.trim() && formData.dreamJob.trim(),
@@ -57,8 +59,11 @@ const StepTemplate = ({ formData, updateField, onBack, onNext }: Props) => {
       if (error) throw new Error(await readFunctionError(error));
       if (data?.error) throw new Error(data.error);
       if (!data?.art_url) throw new Error("No artwork returned");
+      const theme = parseArtTheme(data.art_theme);
       setLastArtUrl(data.art_url);
+      setLastArtTheme(theme);
       updateField("artUrl", data.art_url);
+      updateField("artTheme", theme);
       setArtCaption(data.art_direction?.caption ?? "Custom artwork");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Couldn’t generate artwork");
@@ -70,11 +75,13 @@ const StepTemplate = ({ formData, updateField, onBack, onNext }: Props) => {
   const selectTemplate = (templateId: string) => {
     updateField("template", templateId);
     updateField("artUrl", null);
+    updateField("artTheme", null);
   };
 
   const selectGeneratedArt = () => {
     if (!lastArtUrl) return;
     updateField("artUrl", lastArtUrl);
+    updateField("artTheme", lastArtTheme);
   };
 
   const previewArtUrl = formData.artUrl ?? lastArtUrl;

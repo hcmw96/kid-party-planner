@@ -8,6 +8,7 @@ import StepInvite from "@/components/EventForm/StepInvite";
 import StepTemplate from "@/components/EventForm/StepTemplate";
 import StepTwo from "@/components/EventForm/StepTwo";
 import StepThree from "@/components/EventForm/StepThree";
+import type { ArtTheme } from "@/lib/artTheme";
 
 export interface EventFormData {
   childName: string;
@@ -17,6 +18,7 @@ export interface EventFormData {
   organiserName: string;
   template: string;
   artUrl: string | null;
+  artTheme: ArtTheme | null;
   age: string;
   film: string;
   food: string;
@@ -40,6 +42,7 @@ const CreateEvent = () => {
     organiserName: "",
     template: "classic_cream",
     artUrl: null,
+    artTheme: null,
     age: "",
     film: "",
     food: "",
@@ -87,6 +90,7 @@ const CreateEvent = () => {
           organiser_name: formData.organiserName,
           template: formData.template,
           art_url: formData.artUrl,
+          art_theme: formData.artUrl ? (formData.artTheme as any) : null,
           gift_enabled: formData.giftEnabled,
           gift_amount: amountPence,
         })

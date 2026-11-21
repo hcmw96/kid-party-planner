@@ -1,6 +1,7 @@
 import { useParams } from "react-router-dom";
 import { useEvent } from "@/hooks/useEvent";
 import { getTemplate } from "@/lib/templates";
+import { applyArtTheme, parseArtTheme } from "@/lib/artTheme";
 import InvitationCard from "@/components/InvitationCard";
 import RSVPForm from "@/components/RSVPForm";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -31,7 +32,11 @@ const PartyPage = () => {
     );
   }
 
-  const template = getTemplate((event as any).template || "classic_cream");
+  const artTheme = (event as any).art_url ? parseArtTheme((event as any).art_theme) : null;
+  const template = applyArtTheme(
+    getTemplate((event as any).template || "classic_cream"),
+    artTheme,
+  );
   const showGift = event.gift_enabled && event.gift_amount && event.gift_amount > 0;
   const giftAmount = showGift ? (event.gift_amount! / 100).toFixed(2) : null;
 
