@@ -92,6 +92,7 @@ export type Database = {
       }
       events: {
         Row: {
+          art_theme: Json | null
           art_url: string | null
           child_name: string
           created_at: string
@@ -111,6 +112,7 @@ export type Database = {
           title: string
         }
         Insert: {
+          art_theme?: Json | null
           art_url?: string | null
           child_name: string
           created_at?: string
@@ -130,6 +132,7 @@ export type Database = {
           title: string
         }
         Update: {
+          art_theme?: Json | null
           art_url?: string | null
           child_name?: string
           created_at?: string

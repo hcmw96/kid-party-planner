@@ -30,7 +30,74 @@ type ArtDirection = {
   mood: string;
   imagePrompt: string;
   caption: string;
+  theme?: {
+    background?: string;
+    text?: string;
+    accent?: string;
+    muted?: string;
+    font?: string;
+  };
 };
+
+type ArtTheme = {
+  background: string;
+  text: string;
+  accent: string;
+  muted: string;
+  font: "playfair" | "cormorant" | "cormorant_italic";
+  mood: string;
+  caption: string;
+};
+
+const HEX = /^#[0-9a-f]{6}$/i;
+const FONTS = ["playfair", "cormorant", "cormorant_italic"] as const;
+
+function luminance(hex: string): number {
+  const [r, g, b] = [1, 3, 5].map((i) => {
+    const c = parseInt(hex.slice(i, i + 2), 16) / 255;
+    return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+  });
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+}
+
+function contrast(a: string, b: string): number {
+  const [hi, lo] = [luminance(a), luminance(b)].sort((x, y) => y - x);
+  return (hi + 0.05) / (lo + 0.05);
+}
+
+/** Validate the model's theme and force readable text. Falls back to cream. */
+function buildTheme(direction: ArtDirection): ArtTheme {
+  const t = direction.theme ?? {};
+  const pick = (v: unknown, fallback: string) =>
+    typeof v === "string" && HEX.test(v.trim()) ? v.trim() : fallback;
+
+  const background = pick(t.background, "#FAF6F1");
+  const darkBg = luminance(background) < 0.35;
+  const safeText = darkBg ? "#FFFDF8" : "#1C1C1E";
+
+  let text = pick(t.text, safeText);
+  if (contrast(text, background) < 7) text = safeText;
+
+  let muted = pick(t.muted, darkBg ? "#D9D4CC" : "#5E5A57");
+  if (contrast(muted, background) < 4.5) muted = darkBg ? "#D9D4CC" : "#5E5A57";
+
+  let accent = pick(t.accent, darkBg ? "#E3C27A" : "#B8A089");
+  if (contrast(accent, background) < 2) accent = text;
+
+  const font = FONTS.includes(t.font as (typeof FONTS)[number])
+    ? (t.font as ArtTheme["font"])
+    : "playfair";
+
+  return {
+    background,
+    text,
+    accent,
+    muted,
+    font,
+    mood: direction.mood ?? "",
+    caption: direction.caption ?? "Custom artwork",
+  };
+}
 
 function readableApiError(status: number, body: string): string {
   const lower = body.toLowerCase();
@@ -96,27 +163,44 @@ serve(async (req) => {
     }
 
     // --- Pass 1: art direction (strip characters / franchises) ---
-    const directionSystem = `You design restrained invitation artwork for a UK children's party product
-aimed at prep-school parents. Reference point: Paperless Post.
+    const directionSystem = `You art-direct themed invitations for PartyPal, a UK children's party app
+aimed at prep-school parents. Reference point: Paperless Post and Meri Meri: tasteful, but the
+theme must be obvious at a glance. A parent who typed a film should immediately feel that world.
 
 Return ONLY valid JSON:
 {
-  "palette": "3-5 hex colours or short colour names",
-  "motifs": "abstract decorative motifs only",
+  "palette": "short description of the colour story",
+  "motifs": "the decorative motifs used",
   "mood": "one short mood sentence",
   "imagePrompt": "a single image-generation prompt",
-  "caption": "6-10 word UI caption"
+  "caption": "6-10 word UI caption",
+  "theme": {
+    "background": "#RRGGBB  card colour that sits behind the text, drawn from the artwork",
+    "text": "#RRGGBB  headline colour, strong contrast against background",
+    "accent": "#RRGGBB  the signature colour of the theme, used for rules and borders",
+    "muted": "#RRGGBB  secondary text colour, readable on background",
+    "font": "playfair | cormorant | cormorant_italic"
+  }
 }
 
+How to translate the answers:
+- The favourite film sets the world: its setting, colour story and signature textures.
+  Example: an undersea clownfish film -> coral reef, sea anemones, bubbles, rippling light,
+  clownfish orange with white bands against turquoise and deep ocean blue. Not the characters.
+  Example: a London-bear film -> marmalade amber, navy duffel texture, red hat ribbon, rainy
+  London rooftops. Not a bear.
+- The favourite food and dream job add one or two secondary motifs or colour notes.
+- The theme hex colours must come from the artwork so card and art feel like one design.
+
 Hard rules for imagePrompt:
-- Abstract or decorative only: borders, washes, textures, botanical/geometric motifs.
-- Never depict named characters, logos, mascots, costumes, or franchise-specific designs.
+- Richly illustrated, saturated decorative artwork in a painterly, gouache or watercolour style.
+- Motifs fill the edges and corners as a full frame; keep a calmer central panel for the text.
+- Never depict named characters, faces of known characters, logos, mascots, costumes or
+  franchise-specific designs. Generic animals and objects from the setting are fine
+  (e.g. anonymous tropical fish, coral, shells), but never ones styled like a known character.
 - Never include proper nouns from films, TV, games or brands.
-- Translate any film/food/job answers into generic themes and palette cues.
-  Example: a London-bear film → marmalade amber, navy duffel texture, red hat ribbon motif — not a bear.
-- No readable text, letters, numbers or watermarks in the image.
-- Soft, elegant, print-ready; never clip-art, cartoon sticker sheets, or 3D CGI toys.
-- Artwork sits behind typography, so leave calm central negative space.`;
+- No readable text, letters, numbers or watermarks.
+- Never clip-art, sticker sheets or 3D CGI toys.`;
 
     const directionUser = `Create one art direction for this party invitation.
 Child first name only (do not letter the image): ${childName}${age ? `, age ${age}` : ""}
@@ -170,8 +254,8 @@ Dream job (atmosphere only): ${dreamJob}`;
       direction.imagePrompt.trim(),
       "Strictly forbidden: named characters, celebrity likenesses, logos, trademarks,",
       "franchise costumes, mascots, or any recognisable branded design.",
-      "Abstract decorative invitation background only, calm centre for typography,",
-      "no text in the image.",
+      "Decorative illustrated invitation background, motifs framing the edges,",
+      "calmer centre for typography, no text in the image.",
     ].join(" ");
 
     // --- Pass 2: image generation ---
@@ -231,6 +315,7 @@ Dream job (atmosphere only): ${dreamJob}`;
 
     return jsonResponse({
       art_url: artUrl,
+      art_theme: buildTheme(direction),
       art_path: path,
       art_direction: {
         palette: direction.palette ?? "",
