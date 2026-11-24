@@ -20,7 +20,7 @@ import {
   maybeRequestRatingAfterFirstParty,
 } from "@/lib/despia";
 
-const STEP_LABELS = ["The star", "The day", "The background", "The gift"];
+const STEP_LABELS = ["The star", "The day", "The background", "From you"];
 
 const CreateEvent = () => {
   const { user, loading: authLoading } = useAuth();
@@ -139,7 +139,7 @@ const CreateEvent = () => {
 
       <div
         ref={scroller}
-        className="flex-1 overflow-y-auto"
+        className="flex-1 max-w-full overflow-x-hidden overflow-y-auto overscroll-x-none [touch-action:pan-y]"
         style={{ paddingBottom: "calc(2rem + var(--safe-area-bottom, env(safe-area-inset-bottom, 0px)))" }}
       >
         <div className="mx-auto w-full max-w-md px-5 pb-10 pt-8">

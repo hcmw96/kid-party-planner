@@ -31,7 +31,11 @@ const Login = () => {
           toast.success("Account created");
           navigate(next);
         } else {
-          toast.success("Account created. Check your email to confirm, then log in.");
+          toast.success(
+            savingParty
+              ? "Account created. Check your email to confirm, then log in. Your party is still on this phone."
+              : "Account created. Check your email to confirm, then log in.",
+          );
         }
       } else {
         const { error } = await signIn(email, password);
@@ -58,7 +62,7 @@ const Login = () => {
           </h1>
           <p className="mt-2 text-[15px] leading-relaxed text-[#71677F]">
             {savingParty
-              ? "Your invitation is ready. An account keeps it, and it's free."
+              ? "The party is not saved until you tap Create party. An account keeps it, and it's free."
               : isSignUp
                 ? "Free to start. You'll use this to manage the party."
                 : "Log in to see your parties."}

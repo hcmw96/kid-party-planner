@@ -37,6 +37,35 @@ export function timePhrase(start: string, end: string): string {
   return `From ${formatTime(start)} to ${formatTime(end)}`;
 }
 
+/** True when both times are set and the party would finish before it starts. */
+export function endsBeforeStart(start: string, end: string): boolean {
+  if (!start || !end) return false;
+  return end < start;
+}
+
+function clockTo24(token: string): string | null {
+  const match = token.trim().match(/^(\d{1,2})(?::(\d{2}))?(am|pm)$/i);
+  if (!match) return null;
+  let hour = Number.parseInt(match[1], 10);
+  const minute = Number.parseInt(match[2] ?? "0", 10);
+  if (!Number.isFinite(hour) || hour < 1 || hour > 12 || minute < 0 || minute > 59) return null;
+  const suffix = match[3].toLowerCase();
+  if (suffix === "am") hour = hour === 12 ? 0 : hour;
+  else if (hour !== 12) hour += 12;
+  return `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
+}
+
+/** Reads the stored "From 2pm to 4pm" line back into form times. */
+export function timesFromDescription(description: string | null | undefined): { start: string; end: string } | null {
+  const first = description?.split(/\n\n/)[0]?.trim() ?? "";
+  const match = first.match(/^From\s+(.+)\s+to\s+(.+)$/i);
+  if (!match) return null;
+  const start = clockTo24(match[1]);
+  const end = clockTo24(match[2]);
+  if (!start || !end) return null;
+  return { start, end };
+}
+
 export function composeDescription(input: {
   wording?: string;
   notes?: string;

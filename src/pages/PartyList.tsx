@@ -7,11 +7,16 @@ import NativeNavBar from "@/components/native/NativeNavBar";
 import { haptic, showActionSheet, isDespia } from "@/lib/despia";
 import balloonHero from "@/assets/balloon-hero.png";
 import { countdownLabel, formatPartyDate } from "@/lib/party";
+import { loadDraft } from "@/lib/draft";
 import { getTemplate } from "@/lib/templates";
 
 const PartyList = () => {
   const { user, loading: authLoading, signOut } = useAuth();
   const navigate = useNavigate();
+  const draft = loadDraft();
+  const draftName = draft?.form.childName.trim() ?? "";
+  const unfinished = Boolean(draft && (draftName || draft.step > 1));
+  const draftLabel = draftName ? `Finish ${draftName}'s party` : "Finish your party";
 
   const { data: events = [], isLoading, isError, error, refetch } = useQuery({
     queryKey: ["events", user?.id],
@@ -54,6 +59,7 @@ const PartyList = () => {
       }
       return;
     }
+    if (!window.confirm("Sign out of PartyPal?")) return;
     await signOut();
     navigate("/");
   };
@@ -102,10 +108,10 @@ const PartyList = () => {
             <img src={balloonHero} alt="" className="mx-auto h-28 w-28 object-contain motion-safe:animate-float" />
             <p className="mt-4 text-[1.4rem] font-extrabold tracking-[-0.04em] text-[#282035]">Ready when you are</p>
             <p className="mt-2 text-[15px] leading-relaxed text-[#71677F]">
-              Your first invitation takes a couple of minutes.
+              {unfinished ? "You already started one on this phone." : "Your first invitation takes a couple of minutes."}
             </p>
             <button type="button" className="ink-button mt-6" onClick={() => navigate("/create")}>
-              Create a party
+              {unfinished ? draftLabel : "Create a party"}
             </button>
           </div>
         ) : (
@@ -134,6 +140,11 @@ const PartyList = () => {
                 </button>
               );
             })}
+            {unfinished ? (
+              <button type="button" className="soft-button mt-4" onClick={() => navigate("/create")}>
+                {draftLabel}
+              </button>
+            ) : null}
             <button type="button" className="ink-button mt-4" onClick={() => navigate("/create")}>
               New party
             </button>

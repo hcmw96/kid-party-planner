@@ -11,12 +11,23 @@ import GuestList from "@/components/GuestList";
 import GiftProgress from "@/components/GiftProgress";
 import InvitationCard from "@/components/InvitationCard";
 import NativeNavBar from "@/components/native/NativeNavBar";
-import { Field, FieldArea } from "@/components/design/Field";
+import { Field, FieldArea, FieldError } from "@/components/design/Field";
 import AddressField from "@/components/AddressField";
+import { Switch } from "@/components/ui/switch";
 import { getShareUrl } from "@/lib/shareUrl";
 import { shareMessage } from "@/lib/sharePreview";
 import { getTemplate } from "@/lib/templates";
-import { ageFromTitle, birthdayTitle, countdownLabel, formatPartyDate, formatUkDate, splitPartyNotes } from "@/lib/party";
+import {
+  ageFromTitle,
+  birthdayTitle,
+  composeDescription,
+  countdownLabel,
+  endsBeforeStart,
+  formatPartyDate,
+  formatUkDate,
+  splitPartyNotes,
+  timesFromDescription,
+} from "@/lib/party";
 import {
   nativeShare,
   haptic,
@@ -38,14 +49,18 @@ const Dashboard = () => {
   const [message, setMessage] = useState("");
   const [sending, setSending] = useState(false);
   const [editing, setEditing] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
   const [editDraft, setEditDraft] = useState({
     childName: "",
+    age: "",
     date: "",
+    startTime: "",
+    endTime: "",
     location: "",
     locationAddress: "",
     locationLat: null as number | null,
     locationLng: null as number | null,
-    description: "",
+    words: "",
     giftEnabled: false,
     giftAmount: "10",
   });
@@ -149,7 +164,7 @@ const Dashboard = () => {
   const openActions = async () => {
     await haptic("light");
     if (!isDespia) {
-      await handleShare();
+      setMoreOpen((open) => !open);
       return;
     }
     const value = await showActionSheet({
@@ -196,10 +211,14 @@ const Dashboard = () => {
     setSending(true);
     await showSpinner();
     try {
-      const { error } = await supabase.functions.invoke("send-event-email", {
+      const { data, error } = await supabase.functions.invoke("send-event-email", {
         body: { event_id: eventId, type: "reminder" },
       });
       if (error) throw error;
+      if (!data?.sent) {
+        toast("No one to remind yet. Reminders go to people who've said they're coming.");
+        return;
+      }
       await haptic("success");
       toast.success("Reminder sent");
     } catch {
@@ -212,14 +231,19 @@ const Dashboard = () => {
   };
 
   const startEdit = () => {
+    const times = timesFromDescription(event.description);
+    const years = ageFromTitle(event.title);
     setEditDraft({
       childName: event.child_name,
+      age: years ? String(years) : "",
       date: event.date,
+      startTime: times?.start ?? "",
+      endTime: times?.end ?? "",
       location: event.location,
       locationAddress: event.location_address ?? "",
       locationLat: event.location_lat,
       locationLng: event.location_lng,
-      description: event.description ?? "",
+      words: splitPartyNotes(event.description).body,
       giftEnabled: event.gift_enabled,
       giftAmount: event.gift_amount ? String(event.gift_amount / 100) : "10",
     });
@@ -227,20 +251,25 @@ const Dashboard = () => {
   };
 
   const saveEdit = async () => {
+    if (endsBeforeStart(editDraft.startTime, editDraft.endTime)) return;
     setSending(true);
     try {
-      const years = ageFromTitle(event.title);
+      const description = composeDescription({
+        start: editDraft.startTime,
+        end: editDraft.endTime,
+        wording: editDraft.words,
+      });
       const { error } = await supabase
         .from("events")
         .update({
           child_name: editDraft.childName.trim(),
-          title: birthdayTitle(editDraft.childName, years ? String(years) : ""),
+          title: birthdayTitle(editDraft.childName, editDraft.age),
           date: editDraft.date,
           location: editDraft.location.trim(),
           location_address: editDraft.locationAddress.trim() || null,
           location_lat: editDraft.locationLat,
           location_lng: editDraft.locationLng,
-          description: editDraft.description.trim() || null,
+          description: description || null,
           gift_enabled: editDraft.giftEnabled,
           gift_amount: editDraft.giftEnabled ? Math.round(parseFloat(editDraft.giftAmount) * 100) : 0,
         })
@@ -272,6 +301,29 @@ const Dashboard = () => {
       />
 
       <div className="mx-auto max-w-lg space-y-8 px-5 pt-4">
+        {moreOpen ? (
+          <div className="overflow-hidden rounded-[22px] bg-white shadow-[0_8px_24px_rgba(40,32,53,0.04)]">
+            <button
+              type="button"
+              className="block w-full px-5 py-4 text-left text-[15px] font-semibold text-[#282035]"
+              onClick={() => {
+                setMoreOpen(false);
+                void handleCopy();
+              }}
+            >
+              Copy link
+            </button>
+            <a
+              className="block border-t border-[#EAE2F8] px-5 py-4 text-[15px] font-semibold text-[#282035]"
+              href={`/party/${eventId}`}
+              target="_blank"
+              rel="noreferrer"
+              onClick={() => setMoreOpen(false)}
+            >
+              Preview invitation
+            </a>
+          </div>
+        ) : null}
         <div className="overflow-hidden rounded-[24px] shadow-[0_16px_40px_rgba(40,32,53,0.08)]">
           <InvitationCard
             template={template}
@@ -318,7 +370,19 @@ const Dashboard = () => {
           <section className="space-y-4 rounded-[24px] bg-white p-5 shadow-[0_8px_24px_rgba(40,32,53,0.04)]">
             <h2 className="text-[1.15rem] font-extrabold tracking-[-0.03em] text-[#282035]">Edit party</h2>
             <Field label="Name" name="edit-name" value={editDraft.childName} onChange={(e) => setEditDraft((d) => ({ ...d, childName: e.target.value }))} />
+            <Field
+              label="How old will they be?"
+              name="edit-age"
+              inputMode="numeric"
+              value={editDraft.age}
+              onChange={(e) => setEditDraft((d) => ({ ...d, age: e.target.value.replace(/[^\d]/g, "").slice(0, 2) }))}
+              hint="Optional. It appears on the invitation."
+            />
             <Field label="Date" name="edit-date" type="date" value={editDraft.date} onChange={(e) => setEditDraft((d) => ({ ...d, date: e.target.value }))} />
+            <div className="grid grid-cols-2 gap-3">
+              <Field label="Starts" name="edit-start" type="time" value={editDraft.startTime} onChange={(e) => setEditDraft((d) => ({ ...d, startTime: e.target.value }))} />
+              <Field label="Ends" name="edit-end" type="time" value={editDraft.endTime} onChange={(e) => setEditDraft((d) => ({ ...d, endTime: e.target.value }))} />
+            </div>
             <AddressField
               value={editDraft.location}
               onChange={(place) =>
@@ -331,16 +395,15 @@ const Dashboard = () => {
                 }))
               }
             />
-            <FieldArea label="Note on the invitation" name="edit-description" rows={4} value={editDraft.description} onChange={(e) => setEditDraft((d) => ({ ...d, description: e.target.value }))} />
-            <label className="flex items-center justify-between gap-3 text-[15px] font-semibold text-[#282035]">
-              Group gift
-              <input
-                type="checkbox"
+            <FieldArea label="Words on the invitation" name="edit-words" rows={4} value={editDraft.words} onChange={(e) => setEditDraft((d) => ({ ...d, words: e.target.value }))} />
+            <div className="flex items-center justify-between gap-4">
+              <p className="text-[15px] font-bold tracking-[-0.02em] text-[#282035]">Group gift</p>
+              <Switch
                 checked={editDraft.giftEnabled}
-                onChange={(e) => setEditDraft((d) => ({ ...d, giftEnabled: e.target.checked }))}
-                className="h-5 w-5 accent-[#282035]"
+                onCheckedChange={(checked) => setEditDraft((d) => ({ ...d, giftEnabled: checked }))}
+                aria-label="Group gift"
               />
-            </label>
+            </div>
             {editDraft.giftEnabled ? (
               <Field
                 label="Suggested amount (£)"
@@ -351,7 +414,15 @@ const Dashboard = () => {
                 onChange={(e) => setEditDraft((d) => ({ ...d, giftAmount: e.target.value }))}
               />
             ) : null}
-            <button type="button" className="ink-button" onClick={() => void saveEdit()} disabled={sending}>
+            {endsBeforeStart(editDraft.startTime, editDraft.endTime) ? (
+              <FieldError>The party can't finish before it starts.</FieldError>
+            ) : null}
+            <button
+              type="button"
+              className="ink-button"
+              onClick={() => void saveEdit()}
+              disabled={sending || endsBeforeStart(editDraft.startTime, editDraft.endTime)}
+            >
               Save changes
             </button>
             <button type="button" className="ghost-button w-full" onClick={() => setEditing(false)}>

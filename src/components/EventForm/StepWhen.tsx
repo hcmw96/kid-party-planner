@@ -1,5 +1,6 @@
 import type { EventFormData } from "@/lib/eventForm";
-import { Field, FieldArea } from "@/components/design/Field";
+import { endsBeforeStart } from "@/lib/party";
+import { Field, FieldArea, FieldError } from "@/components/design/Field";
 import AddressField from "@/components/AddressField";
 
 interface Props {
@@ -9,7 +10,8 @@ interface Props {
 }
 
 const StepWhen = ({ formData, updateField, onNext }: Props) => {
-  const ready = Boolean(formData.date && formData.location.trim() && formData.organiserName.trim());
+  const timesReversed = endsBeforeStart(formData.startTime, formData.endTime);
+  const ready = Boolean(formData.date && formData.location.trim() && formData.startTime && formData.endTime && !timesReversed);
 
   return (
     <form
@@ -63,15 +65,6 @@ const StepWhen = ({ formData, updateField, onNext }: Props) => {
           updateField("locationLng", place.lng);
         }}
       />
-      <Field
-        label="Your name"
-        name="organiserName"
-        autoComplete="given-name"
-        placeholder="So guests know who it's from"
-        value={formData.organiserName}
-        onChange={(event) => updateField("organiserName", event.target.value)}
-        required
-      />
       <FieldArea
         label="Anything else?"
         name="notes"
@@ -81,6 +74,8 @@ const StepWhen = ({ formData, updateField, onNext }: Props) => {
         rows={3}
         hint="Optional."
       />
+
+      {timesReversed ? <FieldError>The party can't finish before it starts.</FieldError> : null}
 
       <button type="submit" className="ink-button" disabled={!ready}>
         Continue

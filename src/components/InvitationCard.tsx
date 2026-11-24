@@ -33,8 +33,8 @@ const InvitationCard = ({
 
   if (artUrl) {
     return (
-      <article className="relative overflow-hidden text-white">
-        <img src={artUrl} alt="" className="absolute inset-0 h-full w-full object-cover object-[center_18%]" />
+      <article className="relative w-full max-w-full overflow-hidden text-white">
+        <img src={artUrl} alt="" className="absolute inset-0 h-full w-full max-w-full object-cover object-[center_18%]" />
         <div className="absolute inset-0 bg-[linear-gradient(to_bottom,rgba(12,10,16,0.08)_0%,rgba(12,10,16,0.02)_34%,rgba(12,10,16,0.45)_62%,rgba(12,10,16,0.78)_100%)]" />
         <div
           className={`relative flex flex-col justify-end text-center ${
@@ -89,7 +89,7 @@ const InvitationCard = ({
 
   return (
     <article
-      className="relative overflow-hidden"
+      className="relative w-full max-w-full overflow-hidden"
       style={{ background: template.palette.background, color: template.palette.text }}
     >
       <div className={`relative ${poster ? "h-48" : "h-64"}`}>

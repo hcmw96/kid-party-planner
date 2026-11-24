@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { ageFromTitle, birthdayTitle, composeDescription, splitPartyNotes } from "./party";
+import {
+  ageFromTitle,
+  birthdayTitle,
+  composeDescription,
+  endsBeforeStart,
+  splitPartyNotes,
+  timesFromDescription,
+} from "./party";
 import { getTemplate } from "./templates";
 
 describe("party copy", () => {
@@ -22,6 +29,23 @@ describe("party copy", () => {
       timeLabel: "2pm – 4pm",
       body: "Bring a jumper\n\nCome hungry.",
     });
+  });
+
+  it("rejects a party that finishes before it starts", () => {
+    expect(endsBeforeStart("16:00", "14:00")).toBe(true);
+    expect(endsBeforeStart("14:00", "16:00")).toBe(false);
+    expect(endsBeforeStart("14:00", "14:00")).toBe(false);
+  });
+
+  it("reads a stored time line back into form times", () => {
+    const description = composeDescription({
+      start: "14:00",
+      end: "16:30",
+      wording: "Come hungry.",
+    });
+    expect(timesFromDescription(description)).toEqual({ start: "14:00", end: "16:30" });
+    expect(splitPartyNotes(description).body).toBe("Come hungry.");
+    expect(timesFromDescription("Just a note")).toBeNull();
   });
 
   it("maps older invitation styles onto the new themes", () => {

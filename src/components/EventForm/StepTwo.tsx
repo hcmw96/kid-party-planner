@@ -10,16 +10,28 @@ interface Props {
 }
 
 const StepTwo = ({ formData, updateField, onNext, submitting }: Props) => {
+  const ready = Boolean(formData.organiserName.trim());
+
   return (
     <div className="step-rise space-y-7">
       <div>
         <h2 className="text-[2rem] font-extrabold leading-[1.05] tracking-[-0.045em] text-[#282035]">
-          One big present?
+          Who's it from?
         </h2>
         <p className="mt-3 text-[16px] leading-relaxed text-[#71677F]">
-          Instead of lots of little presents, let everyone chip in towards something special.
+          Guests see your name when they reply. A group gift is optional.
         </p>
       </div>
+
+      <Field
+        label="Your name"
+        name="organiserName"
+        autoComplete="name"
+        placeholder="So guests know who it's from"
+        value={formData.organiserName}
+        onChange={(event) => updateField("organiserName", event.target.value)}
+        required
+      />
 
       <div className="rounded-[22px] bg-white p-5 shadow-[0_8px_24px_rgba(40,32,53,0.04)]">
         <div className="flex items-center justify-between gap-4">
@@ -51,9 +63,10 @@ const StepTwo = ({ formData, updateField, onNext, submitting }: Props) => {
         )}
       </div>
 
-      <button type="button" onClick={onNext} disabled={submitting} className="ink-button">
-        {submitting ? "Saving…" : formData.giftEnabled ? "Create party" : "Skip for now"}
+      <button type="button" onClick={onNext} disabled={submitting || !ready} className="ink-button">
+        {submitting ? "Saving…" : "Create party"}
       </button>
+      {!ready ? <p className="text-center text-[13px] text-[#71677F]">Add your name to create the party.</p> : null}
     </div>
   );
 };
