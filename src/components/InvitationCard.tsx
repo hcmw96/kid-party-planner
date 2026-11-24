@@ -78,7 +78,7 @@ const InvitationCard = ({
           ) : null}
           {!poster ? (
             <p className="mt-6 inline-flex items-center justify-center gap-1.5 text-[12px] font-semibold tracking-[-0.01em] text-white/70">
-              <img src={balloonIcon} alt="" className="h-4 w-4 object-contain" />
+              <img src={balloonIcon} alt="" className="h-6 w-6 rounded-[22%] object-cover" />
               PartyPal
             </p>
           ) : null}
@@ -138,7 +138,7 @@ const InvitationCard = ({
 
         {!poster ? (
           <p className="mt-6 inline-flex items-center gap-1.5 text-[12px] font-semibold tracking-[-0.01em]" style={{ color: template.palette.muted }}>
-            <img src={balloonIcon} alt="" className="h-4 w-4 object-contain" />
+            <img src={balloonIcon} alt="" className="h-6 w-6 rounded-[22%] object-cover" />
             PartyPal
           </p>
         ) : null}

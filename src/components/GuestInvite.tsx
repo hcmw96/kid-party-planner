@@ -31,8 +31,8 @@ const GuestInvite = ({ event, demo = false }: Props) => {
   }, [template.dark]);
 
   return (
-    <div className="min-h-full bg-[#F9F7FC] lg:py-10">
-      <div className="mx-auto min-h-full max-w-md bg-[#F9F7FC] lg:overflow-hidden lg:rounded-[28px] lg:shadow-[0_24px_60px_rgba(40,32,53,0.08)]">
+    <div className="min-h-full bg-[#F9F7FC]">
+      <div className="min-h-full w-full bg-[#F9F7FC]">
         {demo ? (
           <p className="px-6 pt-4 text-center text-[13px] font-medium text-[#71677F]">
             An example party, so you can try the invitation.
@@ -48,7 +48,7 @@ const GuestInvite = ({ event, demo = false }: Props) => {
           note={body}
           artUrl={event.art_url}
         />
-        <div id="rsvp-form" className="space-y-6 px-5 pb-16 pt-2">
+        <div id="rsvp-form" className="mx-auto w-full max-w-md space-y-6 px-5 pb-16 pt-2">
           {showGift ? (
             <p className="text-center text-[14px] leading-relaxed text-[#71677F]">
               There's an optional group gift after you reply. No pressure at all.
