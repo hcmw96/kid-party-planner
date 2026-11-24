@@ -69,6 +69,50 @@ function jsonResponse(body: unknown, status = 200) {
   });
 }
 
+function yearsOld(age: string): number | null {
+  const years = Number.parseInt(age, 10);
+  if (!Number.isFinite(years) || years < 1 || years > 18) return null;
+  return years;
+}
+
+/** How grown-up the painting should feel. A 10-year-old is not a toddler. */
+function ageLook(years: number | null): { brief: string; finish: string } {
+  if (years != null && years <= 4) {
+    return {
+      brief: "They are very small. A soft picture book is right: rounded shapes, friendly faces, gentle colour.",
+      finish: "Soft, friendly and colourful, like a picture book for a very young child.",
+    };
+  }
+  if (years != null && years <= 7) {
+    return {
+      brief: "They are a young child. Playful and clear, with the subject as the hero. Not a baby illustration.",
+      finish: "Lively and colourful. The subject is obvious. Not babyish.",
+    };
+  }
+  if (years != null && years <= 11) {
+    return {
+      brief: `They are turning ${years}. Paint for that age, not for a toddler. They should think it looks cool. No smiling baby animals, no chubby cartoon faces, no rainbows added for cuteness. Draw the real thing with confidence: dinosaurs are impressive prehistoric animals in a landscape, a sport looks like the actual game, space is cinematic. Rich, bold colour. Illustrated, not a photograph, and not a picture book for little children.`,
+      finish: `Illustrated for a ${years}-year-old: confident and cool, not cute, not a toddler picture. The subject is obvious at a glance.`,
+    };
+  }
+  if (years != null && years <= 14) {
+    return {
+      brief: `They are turning ${years}. Early teenage taste. Graphic, sharp and stylish. Not cute, and not a children's picture book. The subject stays obvious.`,
+      finish: "Stylish and graphic, grown-up enough for a young teenager. Not cute. The subject is obvious.",
+    };
+  }
+  if (years != null) {
+    return {
+      brief: `They are turning ${years}. Older teenage taste. Atmospheric and poster-like. Not cute. The subject stays obvious.`,
+      finish: "Atmospheric and grown-up, like a good poster. Not cute. The subject is obvious.",
+    };
+  }
+  return {
+    brief: "No age was given. Paint a primary-school birthday: clear and lively, not a nursery picture.",
+    finish: "Clear and lively. Not a nursery illustration. The subject is obvious.",
+  };
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -82,6 +126,8 @@ serve(async (req) => {
     const body = (await req.json()) as ArtInput;
     const childName = (body.childName ?? "").trim();
     const age = String(body.age ?? "").trim();
+    const years = yearsOld(age);
+    const look = ageLook(years);
     const inspiration = neutraliseProperNouns(body.inspiration || body.film || "");
     const partyType = (body.partyType ?? "birthday").trim() || "birthday";
 
@@ -93,33 +139,37 @@ serve(async (req) => {
     }
 
     // --- Pass 1: art direction (strip characters / franchises) ---
-    const directionSystem = `You design invitation artwork for a young child's birthday party.
+    const directionSystem = `You design invitation artwork for a birthday party.
 A parent should glance at it and immediately see what the child loves.
-It should feel joyful and celebratory, like a birthday card, not a spa, a wedding, or abstract art.
+It should feel like a birthday, not a spa, a wedding, or abstract art.
+The child's age decides how grown-up it looks. Never paint a toddler picture for an older child.
 
 Return ONLY valid JSON:
 {
-  "palette": "3-5 bright, clear colours",
+  "palette": "3-5 colours that suit the age",
   "motifs": "the specific objects to draw",
   "mood": "one short mood sentence",
-  "imagePrompt": "a single image-generation prompt",
+  "imagePrompt": "a single image-generation prompt that includes the age and the look",
   "caption": "6-10 word UI caption a parent would understand"
 }
 
 Hard rules for imagePrompt:
-- Draw the subject clearly. Astronaut means a rocket, stars, a moon and planets. Football means a sunny pitch and a ball. Dinosaurs means friendly dinosaurs and ferns.
+- Draw the subject clearly. Astronaut means a rocket, stars, a moon and planets. Football means the game itself. Dinosaurs means dinosaurs, drawn at the maturity the age note asks for.
 - Use that one idea only. Do not add unrelated hobbies, foods or jobs.
-- Make it obviously for a child: playful shapes, cheerful colour, a sense of a party.
+- Follow the age note exactly. If it says not cute, do not add smiles, big eyes, or baby proportions.
 - Never depict named characters, logos, mascots, costumes, or franchise-specific designs.
-- Never include proper nouns from films, TV, games or brands. A bear film becomes a simple friendly bear, not a branded one.
+- Never include proper nouns from films, TV, games or brands. A bear film becomes a bear, not a branded one.
 - No readable text, letters, numbers or watermarks.
 - Not a pale empty wash. Not clip-art sticker sheets. Not photorealistic.
-- Leave the lower middle fairly calm so a name can sit on top, but the theme must fill the rest of the picture.`;
+- Portrait, taller than wide. This is the entire invitation, not a banner cropped across the top.
+- Put the subject in the upper two thirds. The lower third stays a calmer, darker continuation of the same scene, so a name, an age line, a date and a place can be set there in type. Do not paint those words.`;
 
-    const directionUser = `Paint a children's birthday invitation background.
-Child first name only (do not letter the image): ${childName}${age ? `, turning ${age}` : ""}
-The one thing they love, drawn so a child would recognise it:
-${inspiration}`;
+    const directionUser = `Paint a portrait invitation background. The picture is the whole card.
+Child first name only (do not letter the image): ${childName}${years ? `, turning ${years}` : ""}
+Age and look: ${look.brief}
+The one thing they love:
+${inspiration}
+Compose the scene around the words that will be placed on the lower third: the child's name, ${years ? `that they are turning ${years}` : "that it is their birthday"}, then the day and the place. Leave that region quiet. Do not write anything.`;
 
     const directionRes = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
@@ -163,12 +213,13 @@ ${inspiration}`;
     }
 
     const safeImagePrompt = [
-      "Children's birthday party invitation illustration.",
+      years ? `Birthday invitation illustration for a ${years}-year-old.` : "Birthday invitation illustration.",
       direction.imagePrompt.trim(),
-      "The subject must be obvious at a glance. Joyful, colourful, playful.",
+      look.finish,
+      "Portrait composition, the full invitation background, not a wide landscape banner.",
+      "Subject in the upper two thirds. Lower third calmer and darker, continuing the same scene, ready for a name and party details to be set in type. Do not paint any words.",
       "No named characters, celebrity likenesses, logos, trademarks or branded costumes.",
       "No text, letters or numbers anywhere in the image.",
-      "Keep the lower middle quieter so a name can be placed on top.",
     ].join(" ");
 
     // --- Pass 2: image generation ---

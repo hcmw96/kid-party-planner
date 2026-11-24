@@ -397,6 +397,45 @@
   animation: rise 0.45s ease both;
 }
 
+.paint-veil {
+  background:
+    radial-gradient(circle at 50% 48%, rgba(255, 255, 255, 0.42), transparent 36%),
+    linear-gradient(115deg, rgba(249, 247, 252, 0.28), rgba(234, 226, 248, 0.18), rgba(243, 74, 165, 0.14), rgba(107, 122, 255, 0.16), rgba(249, 247, 252, 0.28));
+  background-size: 100% 100%, 260% 260%;
+  animation: paint-drift 9s ease-in-out infinite;
+}
+
+.paint-mote {
+  position: absolute;
+  bottom: 22%;
+  border-radius: 999px;
+  box-shadow: 0 0 14px rgba(255, 255, 255, 0.85);
+  animation: paint-mote 4.8s ease-in-out infinite;
+}
+
+.paint-line {
+  animation: paint-line 2.8s ease both;
+}
+
+@keyframes paint-drift {
+  0% { background-position: 0% 40%; }
+  50% { background-position: 100% 70%; }
+  100% { background-position: 0% 40%; }
+}
+
+@keyframes paint-mote {
+  0% { transform: translateY(12px) scale(0.5); opacity: 0; }
+  18% { opacity: 0.95; }
+  100% { transform: translateY(-240px) scale(1); opacity: 0; }
+}
+
+@keyframes paint-line {
+  0% { opacity: 0; transform: translateY(6px); }
+  12% { opacity: 1; transform: translateY(0); }
+  82% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(-4px); }
+}
+
 .ink-button:disabled,
 .soft-button:disabled,
 .choice-button:disabled {
@@ -407,6 +446,9 @@
 @media (prefers-reduced-motion: reduce) {
   .step-rise,
   .confetti-piece,
+  .paint-veil,
+  .paint-mote,
+  .paint-line,
   .motion-safe\:animate-float,
   .motion-safe\:animate-confetti {
     animation: none !important;

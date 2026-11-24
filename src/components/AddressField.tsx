@@ -15,71 +15,85 @@ interface Props {
 
 const AddressField = ({ value, onChange }: Props) => {
   const listId = useId();
+  const [text, setText] = useState(value);
   const [open, setOpen] = useState(false);
   const [matches, setMatches] = useState<PlaceMatch[]>([]);
   const [active, setActive] = useState(0);
   const request = useRef(0);
+  const timer = useRef(0);
   const chosen = useRef<string | null>(null);
 
   useEffect(() => {
-    if (value === chosen.current) return;
-    const trimmed = value.trim();
+    setText(value);
+  }, [value]);
+
+  useEffect(() => () => window.clearTimeout(timer.current), []);
+
+  const search = (next: string) => {
+    window.clearTimeout(timer.current);
+    if (next === chosen.current) return;
+    const trimmed = next.trim();
     if (trimmed.length < 2) {
+      request.current += 1;
       setMatches([]);
       setOpen(false);
       return;
     }
 
     const current = ++request.current;
-    const controller = new AbortController();
-    const timer = window.setTimeout(() => {
-      void searchPlaces(trimmed, controller.signal)
-        .then((next) => {
+    timer.current = window.setTimeout(() => {
+      void searchPlaces(trimmed)
+        .then((found) => {
           if (current !== request.current) return;
-          setMatches(next);
+          setMatches(found);
           setActive(0);
-          setOpen(next.length > 0);
+          setOpen(found.length > 0);
         })
         .catch(() => {
-          if (current === request.current) setMatches([]);
+          if (current === request.current) {
+            setMatches([]);
+            setOpen(false);
+          }
         });
-    }, 250);
+    }, 200);
+  };
 
-    return () => {
-      window.clearTimeout(timer);
-      controller.abort();
-    };
-  }, [value]);
+  const edit = (next: string) => {
+    chosen.current = null;
+    setText(next);
+    onChange({ label: next, address: null, lat: null, lng: null });
+    search(next);
+  };
 
   const choose = (place: PlaceMatch) => {
     chosen.current = place.label;
+    setText(place.label);
     onChange({ label: place.label, address: place.address, lat: place.lat, lng: place.lng });
     setOpen(false);
     setMatches([]);
   };
 
   return (
-    <div className="relative">
+    <div className="relative z-30">
       <label htmlFor="where" className="block">
         <span className="field-label">Where</span>
         <input
           id="where"
-          name="location"
+          name="party-venue"
           role="combobox"
           aria-expanded={open}
           aria-controls={listId}
           aria-autocomplete="list"
           autoComplete="off"
+          autoCorrect="off"
+          spellCheck={false}
           className="field-input"
           placeholder="A venue or address"
-          value={value}
-          required
-          onChange={(event) => {
-            onChange({ label: event.target.value, address: null, lat: null, lng: null });
-            setOpen(true);
-          }}
+          value={text}
+          onChange={(event) => edit(event.target.value)}
           onFocus={() => {
             if (matches.length) setOpen(true);
+            else search(text);
           }}
           onKeyDown={(event) => {
             if (!open || !matches.length) return;

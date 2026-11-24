@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { getTemplate } from "@/lib/templates";
 import type { EventFormData } from "@/lib/eventForm";
@@ -34,7 +34,6 @@ const StepTemplate = ({ formData, updateField, onNext }: Props) => {
   const [options, setOptions] = useState<InviteOption[]>([]);
   const [writing, setWriting] = useState(false);
   const [painting, setPainting] = useState(false);
-  const [caption, setCaption] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const promptsReady = Boolean(formData.inspiration.trim());
 
@@ -74,7 +73,6 @@ const StepTemplate = ({ formData, updateField, onNext }: Props) => {
     }
     setPainting(true);
     setError(null);
-    await showSpinner();
     await haptic("light");
     try {
       const { data, error: fnError } = await supabase.functions.invoke("generate-invite-art", {
@@ -90,13 +88,11 @@ const StepTemplate = ({ formData, updateField, onNext }: Props) => {
       if (!data?.art_url) throw new Error("No artwork came back.");
       updateField("artUrl", data.art_url);
       updateField("template", "classic");
-      setCaption(data.art_direction?.caption ?? "Painted for this party");
       await haptic("success");
     } catch (err: unknown) {
       await haptic("error");
       setError(err instanceof Error ? err.message : "Could not paint a background.");
     } finally {
-      await hideSpinner();
       setPainting(false);
     }
   };
@@ -112,8 +108,6 @@ const StepTemplate = ({ formData, updateField, onNext }: Props) => {
         </p>
       </div>
 
-      <LivePreview formData={formData} painting={painting} />
-
       <Field
         label="Something they love"
         name="inspiration"
@@ -123,13 +117,12 @@ const StepTemplate = ({ formData, updateField, onNext }: Props) => {
       />
 
       {error ? <FieldError>{error}</FieldError> : null}
-      {caption && formData.artUrl ? (
-        <p className="text-center text-[13px] font-medium text-[#71677F]">{caption}</p>
-      ) : null}
 
       <button type="button" className="ink-button" onClick={() => void generateArt()} disabled={!promptsReady || painting}>
         {painting ? "Painting…" : formData.artUrl ? "Paint another" : "Paint the background"}
       </button>
+
+      <LivePreview formData={formData} painting={painting} />
 
       <div className="space-y-3">
         <button
@@ -174,6 +167,60 @@ const StepTemplate = ({ formData, updateField, onNext }: Props) => {
   );
 };
 
+const paintLines = (name: string, love: string) => {
+  const who = name.trim() || "them";
+  const thing = love.trim();
+  const loved = thing ? thing.charAt(0).toLowerCase() + thing.slice(1) : "";
+  return [
+    "Stirring the colours",
+    loved ? `Calling ${loved} onto the page` : "Listening to what they love",
+    `Keeping a quiet place for ${who}`,
+    "The invitation is nearly here",
+  ];
+};
+
+const motes = [
+  { left: "14%", delay: "0s", size: "7px", color: "#fff" },
+  { left: "30%", delay: "1.1s", size: "5px", color: "#F6C15B" },
+  { left: "48%", delay: "0.4s", size: "9px", color: "#fff" },
+  { left: "64%", delay: "1.7s", size: "6px", color: "#F7B5D8" },
+  { left: "78%", delay: "0.8s", size: "8px", color: "#F6C15B" },
+  { left: "88%", delay: "2.1s", size: "5px", color: "#fff" },
+];
+
+const PaintVeil = ({ name, love }: { name: string; love: string }) => {
+  const lines = paintLines(name, love);
+  const [line, setLine] = useState(0);
+
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      setLine((current) => (current + 1) % lines.length);
+    }, 2800);
+    return () => window.clearInterval(timer);
+  }, [lines.length]);
+
+  return (
+    <div className="paint-veil absolute inset-0 flex items-center justify-center" role="status" aria-live="polite">
+      {motes.map((mote) => (
+        <span
+          key={mote.left}
+          className="paint-mote"
+          style={{
+            left: mote.left,
+            animationDelay: mote.delay,
+            width: mote.size,
+            height: mote.size,
+            background: mote.color,
+          }}
+        />
+      ))}
+      <p key={line} className="paint-line relative rounded-full bg-white/90 px-4 py-2 text-[13px] font-bold text-[#282035] shadow-[0_8px_24px_rgba(40,32,53,0.12)]">
+        {lines[line]}
+      </p>
+    </div>
+  );
+};
+
 const LivePreview = ({ formData, painting }: { formData: EventFormData; painting: boolean }) => {
   const description = composeDescription({
     wording: formData.description,
@@ -197,13 +244,7 @@ const LivePreview = ({ formData, painting }: { formData: EventFormData; painting
         artUrl={formData.artUrl}
         variant="poster"
       />
-      {painting ? (
-        <div className="absolute inset-0 flex items-end justify-center bg-[#F9F7FC]/70 pb-6">
-          <p className="rounded-full bg-white px-4 py-2 text-[13px] font-bold text-[#282035] shadow-sm">
-            Painting from those answers…
-          </p>
-        </div>
-      ) : null}
+      {painting ? <PaintVeil name={formData.childName} love={formData.inspiration} /> : null}
     </div>
   );
 };
