@@ -1,24 +1,19 @@
-import { useParams, Link } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { Heart } from "lucide-react";
+import { Link, useParams } from "react-router-dom";
+import balloonHero from "@/assets/balloon-hero.png";
 
 const ThankYou = () => {
   const { eventId } = useParams<{ eventId: string }>();
 
   return (
-    <div className="h-full flex items-center justify-center px-6 overflow-hidden animate-fade-in">
-      <div className="text-center space-y-8 max-w-sm">
-        <div className="flex justify-center">
-          <Heart className="h-10 w-10 text-primary" strokeWidth={1.5} />
-        </div>
-        <div className="space-y-3">
-          <h1 className="text-3xl font-semibold text-foreground font-serif">Thank you</h1>
-          <p className="text-muted-foreground">
-            Your contribution has been received. The birthday star is going to love their gift.
-          </p>
-        </div>
-        <Link to={`/party/${eventId}`}>
-          <Button variant="outline">Back to party page</Button>
+    <div className="flex h-full items-center justify-center bg-[#F9F7FC] px-6">
+      <div className="w-full max-w-sm text-center">
+        <img src={balloonHero} alt="" className="mx-auto h-28 w-28 object-contain motion-safe:animate-float" />
+        <h1 className="mt-4 text-[2rem] font-extrabold tracking-[-0.045em] text-[#282035]">Thank you</h1>
+        <p className="mt-2 text-[15px] leading-relaxed text-[#71677F]">
+          Your contribution is in. The birthday star is going to love it.
+        </p>
+        <Link to={`/party/${eventId}`} className="ink-button mt-8">
+          Back to the invitation
         </Link>
       </div>
     </div>

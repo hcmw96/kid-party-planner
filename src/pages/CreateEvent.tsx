@@ -1,14 +1,18 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import StepOne from "@/components/EventForm/StepOne";
-import StepInvite from "@/components/EventForm/StepInvite";
+import StepWhen from "@/components/EventForm/StepWhen";
 import StepTemplate from "@/components/EventForm/StepTemplate";
 import StepTwo from "@/components/EventForm/StepTwo";
 import StepThree from "@/components/EventForm/StepThree";
 import NativeNavBar from "@/components/native/NativeNavBar";
+import ProgressDots from "@/components/design/ProgressDots";
+import { emptyEventForm, type EventFormData } from "@/lib/eventForm";
+import { birthdayTitle, composeDescription, defaultPartyDate, formatUkDate } from "@/lib/party";
+import { clearDraft, loadDraft, saveDraft } from "@/lib/draft";
 import {
   haptic,
   showSpinner,
@@ -16,65 +20,31 @@ import {
   maybeRequestRatingAfterFirstParty,
 } from "@/lib/despia";
 
-export interface EventFormData {
-  childName: string;
-  date: string;
-  location: string;
-  description: string;
-  organiserName: string;
-  template: string;
-  artUrl: string | null;
-  age: string;
-  film: string;
-  food: string;
-  dreamJob: string;
-  partyType: string;
-  giftEnabled: boolean;
-  giftAmount: string;
-}
-
-const STEP_TITLES = ["Details", "Wording", "Design", "Gift", "Done"] as const;
+const STEP_LABELS = ["The star", "The day", "The background", "The gift"];
 
 const CreateEvent = () => {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
-  const [step, setStep] = useState(1);
+  const scroller = useRef<HTMLDivElement>(null);
+  const saved = loadDraft();
+  const [step, setStep] = useState(saved && saved.step >= 1 && saved.step <= 4 ? saved.step : 1);
   const [submitting, setSubmitting] = useState(false);
   const [eventId, setEventId] = useState<string | null>(null);
-  const [formData, setFormData] = useState<EventFormData>({
-    childName: "",
-    date: "",
-    location: "",
-    description: "",
-    organiserName: "",
-    template: "classic_cream",
-    artUrl: null,
-    age: "",
-    film: "",
-    food: "",
-    dreamJob: "",
-    partyType: "birthday",
-    giftEnabled: false,
-    giftAmount: "10",
-  });
+  const [formData, setFormData] = useState<EventFormData>(
+    saved?.form ? { ...emptyEventForm(defaultPartyDate()), ...saved.form } : emptyEventForm(defaultPartyDate()),
+  );
 
-  if (authLoading) {
-    return (
-      <div className="animate-fade-in">
-        <NativeNavBar title="New party" onBack={() => navigate("/parties")} />
-        <div className="w-full max-w-md mx-auto px-6 py-8 space-y-4">
-          <div className="h-6 bg-muted rounded animate-pulse w-1/2" />
-          <div className="h-10 bg-muted rounded animate-pulse" />
-          <div className="h-10 bg-muted rounded animate-pulse" />
-        </div>
-      </div>
-    );
-  }
+  useEffect(() => {
+    if (step === 5) {
+      clearDraft();
+      return;
+    }
+    saveDraft({ form: formData, step });
+  }, [formData, step]);
 
-  if (!user) {
-    navigate("/login");
-    return null;
-  }
+  useEffect(() => {
+    scroller.current?.scrollTo({ top: 0, behavior: "smooth" });
+  }, [step]);
 
   const updateField = (field: keyof EventFormData, value: unknown) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -86,23 +56,36 @@ const CreateEvent = () => {
   };
 
   const handleCreate = async () => {
+    if (!user) {
+      saveDraft({ form: formData, step: 4 });
+      navigate("/login?next=/create");
+      return;
+    }
+
     setSubmitting(true);
     await showSpinner();
     await haptic("heavy");
     try {
-      const amountPence = formData.giftEnabled
-        ? Math.round(parseFloat(formData.giftAmount) * 100)
-        : 0;
+      const amountPence = formData.giftEnabled ? Math.round(parseFloat(formData.giftAmount) * 100) : 0;
+      const description = composeDescription({
+        wording: formData.description,
+        notes: formData.notes,
+        start: formData.startTime,
+        end: formData.endTime,
+      });
       const { data, error } = await supabase
         .from("events")
         .insert({
           organiser_id: user.id,
-          title: `${formData.childName}'s Party`,
-          child_name: formData.childName,
+          title: birthdayTitle(formData.childName, formData.age),
+          child_name: formData.childName.trim(),
           date: formData.date,
-          location: formData.location,
-          description: formData.description || null,
-          organiser_name: formData.organiserName,
+          location: formData.location.trim(),
+          location_address: formData.locationAddress.trim() || null,
+          location_lat: formData.locationLat,
+          location_lng: formData.locationLng,
+          description: description || null,
+          organiser_name: formData.organiserName.trim(),
           template: formData.template,
           art_url: formData.artUrl,
           gift_enabled: formData.giftEnabled,
@@ -112,85 +95,79 @@ const CreateEvent = () => {
         .single();
 
       if (error) throw error;
+      clearDraft();
       setEventId(data.id);
       setStep(5);
       await haptic("success");
       maybeRequestRatingAfterFirstParty();
     } catch (err: unknown) {
       await haptic("error");
-      toast.error(err instanceof Error ? err.message : "Failed to create event");
+      toast.error(err instanceof Error ? err.message : "Couldn't save the party. Please try again.");
     } finally {
       await hideSpinner();
       setSubmitting(false);
     }
   };
 
-  const totalSteps = 5;
-  const title = STEP_TITLES[step - 1] ?? "New party";
+  if (authLoading) {
+    return (
+      <div className="flex h-full flex-col bg-[#F9F7FC]">
+        <NativeNavBar title="New party" onBack={() => navigate("/parties")} backLabel="Parties" />
+        <div className="mx-auto w-full max-w-md space-y-4 px-5 py-8">
+          <div className="h-8 w-2/3 animate-pulse rounded-2xl bg-[#EAE2F8]" />
+          <div className="h-14 animate-pulse rounded-2xl bg-white" />
+          <div className="h-14 animate-pulse rounded-2xl bg-white" />
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="animate-fade-in pb-8">
+    <div className="flex h-full flex-col bg-[#F9F7FC]">
       <NativeNavBar
-        title={title}
+        title={formData.childName.trim() ? `${formData.childName.trim()}'s party` : "New party"}
+        subtitle={formData.childName.trim() && formData.date ? formatUkDate(formData.date) : undefined}
         onBack={
           step === 5
             ? () => navigate(`/dashboard/${eventId}`)
             : step === 1
-              ? () => navigate("/parties")
-              : () => setStep((s) => s - 1)
+              ? () => navigate(user ? "/parties" : "/")
+              : () => setStep((current) => current - 1)
         }
-        backLabel={step === 1 ? "Parties" : "Back"}
+        backLabel={step === 1 ? (user ? "Parties" : "Home") : "Back"}
       />
 
-      <div className="w-full max-w-md mx-auto px-6 pt-6">
-        {step < 5 && (
-          <div className="flex gap-2 mb-8">
-            {Array.from({ length: totalSteps - 1 }, (_, i) => i + 1).map((s) => (
-              <div
-                key={s}
-                className={`h-1 flex-1 rounded-full transition-colors duration-300 ${
-                  s <= step ? "bg-foreground" : "bg-muted"
-                }`}
-              />
-            ))}
-          </div>
-        )}
+      <div
+        ref={scroller}
+        className="flex-1 overflow-y-auto"
+        style={{ paddingBottom: "calc(2rem + var(--safe-area-bottom, env(safe-area-inset-bottom, 0px)))" }}
+      >
+        <div className="mx-auto w-full max-w-md px-5 pb-10 pt-8">
+          {step < 5 ? (
+            <div className="mb-10">
+              <ProgressDots step={step} total={4} label={STEP_LABELS[step - 1]} />
+            </div>
+          ) : null}
 
-        {step === 1 && (
-          <StepOne
-            formData={formData}
-            updateField={updateField}
-            onNext={() => void goNext(2)}
-          />
-        )}
-        {step === 2 && (
-          <StepInvite
-            formData={formData}
-            updateField={updateField}
-            onBack={() => void goNext(1)}
-            onNext={() => void goNext(3)}
-          />
-        )}
-        {step === 3 && (
-          <StepTemplate
-            formData={formData}
-            updateField={updateField}
-            onBack={() => void goNext(2)}
-            onNext={() => void goNext(4)}
-          />
-        )}
-        {step === 4 && (
-          <StepTwo
-            formData={formData}
-            updateField={updateField}
-            onBack={() => void goNext(3)}
-            onNext={handleCreate}
-            submitting={submitting}
-          />
-        )}
-        {step === 5 && eventId && (
-          <StepThree eventId={eventId} formData={formData} />
-        )}
+          {step === 1 ? (
+            <StepOne formData={formData} updateField={updateField} onNext={() => void goNext(2)} />
+          ) : null}
+          {step === 2 ? (
+            <StepWhen formData={formData} updateField={updateField} onNext={() => void goNext(3)} />
+          ) : null}
+          {step === 3 ? (
+            <StepTemplate formData={formData} updateField={updateField} onNext={() => void goNext(4)} />
+          ) : null}
+          {step === 4 ? (
+            <StepTwo
+              formData={formData}
+              updateField={updateField}
+              onNext={handleCreate}
+              submitting={submitting}
+            />
+          ) : null}
+          {step === 5 && eventId ? <StepThree eventId={eventId} formData={formData} /> : null}
+        </div>
       </div>
     </div>
   );

@@ -10,6 +10,7 @@ import CreateEvent from "./pages/CreateEvent";
 import PartyPage from "./pages/PartyPage";
 import ThankYou from "./pages/ThankYou";
 import Dashboard from "./pages/Dashboard";
+import ExampleParty from "./pages/ExampleParty";
 import AdminPage from "./pages/AdminPage";
 import AdminGuard from "./components/admin/AdminGuard";
 import NotFound from "./pages/NotFound";
@@ -27,6 +28,8 @@ const AppRoutes = () => {
       <Route path="/login" element={<Login />} />
       <Route path="/party/:eventId" element={<PartyPage />} />
       <Route path="/party/:eventId/thank-you" element={<ThankYou />} />
+      <Route path="/example" element={<ExampleParty />} />
+      <Route path="/create" element={<CreateEvent />} />
       <Route
         path="/admin"
         element={
@@ -38,7 +41,6 @@ const AppRoutes = () => {
 
       <Route element={<HostShell />}>
         <Route path="/parties" element={<PartyList />} />
-        <Route path="/create" element={<CreateEvent />} />
         <Route path="/dashboard/:eventId" element={<Dashboard />} />
       </Route>
 

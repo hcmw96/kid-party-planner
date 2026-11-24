@@ -1,65 +1,59 @@
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import type { EventFormData } from "@/lib/eventForm";
+import { Field } from "@/components/design/Field";
 import { Switch } from "@/components/ui/switch";
-import type { EventFormData } from "@/pages/CreateEvent";
-import { Gift } from "lucide-react";
 
 interface Props {
   formData: EventFormData;
-  updateField: (field: keyof EventFormData, value: any) => void;
-  onBack: () => void;
+  updateField: (field: keyof EventFormData, value: unknown) => void;
   onNext: () => void;
   submitting: boolean;
 }
 
-const StepTwo = ({ formData, updateField, onBack, onNext, submitting }: Props) => {
+const StepTwo = ({ formData, updateField, onNext, submitting }: Props) => {
   return (
-    <div className="space-y-8">
+    <div className="step-rise space-y-7">
       <div>
-        <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-2 font-sans">
-          Step 4 of 4
+        <h2 className="text-[2rem] font-extrabold leading-[1.05] tracking-[-0.045em] text-[#282035]">
+          One big present?
+        </h2>
+        <p className="mt-3 text-[16px] leading-relaxed text-[#71677F]">
+          Instead of lots of little presents, let everyone chip in towards something special.
         </p>
-        <h2 className="text-3xl font-serif italic text-foreground">Group gift</h2>
-        <p className="text-muted-foreground mt-2 text-sm font-sans">Let parents chip in together</p>
       </div>
 
-      <div className="p-6 rounded-lg bg-card shadow-sm space-y-5">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Gift className="h-5 w-5 text-primary" strokeWidth={1.5} />
-            <Label htmlFor="giftToggle" className="text-sm font-medium">Enable group gift</Label>
-          </div>
+      <div className="rounded-[22px] bg-white p-5 shadow-[0_8px_24px_rgba(40,32,53,0.04)]">
+        <div className="flex items-center justify-between gap-4">
+          <p className="text-[15px] font-bold tracking-[-0.02em] text-[#282035]">Suggest an amount</p>
           <Switch
-            id="giftToggle"
             checked={formData.giftEnabled}
             onCheckedChange={(checked) => updateField("giftEnabled", checked)}
+            aria-label="Suggest an amount"
           />
         </div>
-
-        {formData.giftEnabled && (
-          <div className="space-y-2">
-            <Label htmlFor="giftAmount">Suggested contribution (£)</Label>
-            <Input
-              id="giftAmount"
+        {formData.giftEnabled ? (
+          <div className="mt-4">
+            <Field
+              label="Each person chips in"
+              name="giftAmount"
               type="number"
-              min="1"
-              step="1"
+              inputMode="decimal"
+              min={1}
+              step={1}
               value={formData.giftAmount}
-              onChange={(e) => updateField("giftAmount", e.target.value)}
+              onChange={(event) => updateField("giftAmount", event.target.value)}
+              hint="In pounds. Guests can skip this."
             />
           </div>
+        ) : (
+          <p className="mt-3 text-[14px] leading-relaxed text-[#71677F]">
+            Leave this off and the invitation is just the party.
+          </p>
         )}
       </div>
 
-      <div className="flex gap-3">
-        <Button variant="outline" onClick={onBack} className="flex-1" size="lg">
-          Back
-        </Button>
-        <Button onClick={onNext} disabled={submitting} className="flex-1 uppercase tracking-[0.15em]" size="lg">
-          {submitting ? "Creating…" : "Create party"}
-        </Button>
-      </div>
+      <button type="button" onClick={onNext} disabled={submitting} className="ink-button">
+        {submitting ? "Saving…" : formData.giftEnabled ? "Create party" : "Skip for now"}
+      </button>
     </div>
   );
 };

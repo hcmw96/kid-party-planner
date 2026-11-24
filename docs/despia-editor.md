@@ -1,6 +1,12 @@
 # Despia Editor checklist (PartyPal)
 
-Required for correct safe areas and UIKit chrome. Changes here need a **fresh Despia native rebuild**.
+Required for correct safe areas, UIKit chrome, and brand assets. Changes here need a **fresh Despia native rebuild**.
+
+## App icon (required for brand)
+
+Upload the balloon icon (`public/icon-512.png` in this repo) as the iOS/Android app icon in Despia Editor → App → Icons (and splash if applicable). PWA icons on Netlify update with a normal deploy; the store/TestFlight icon only changes after a Despia rebuild.
+
+Suggested splash / status-bar background: ice blue `#EEF6FF` (RGB `238, 246, 255`).
 
 ## Status bar / safe areas (required)
 

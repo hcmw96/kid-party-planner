@@ -4,13 +4,14 @@ import { haptic } from "@/lib/despia";
 
 interface Props {
   title?: string;
+  subtitle?: string;
   largeTitle?: string;
   backLabel?: string;
   onBack?: () => void;
   trailing?: ReactNode;
 }
 
-const NativeNavBar = ({ title, largeTitle, backLabel = "Back", onBack, trailing }: Props) => {
+const NativeNavBar = ({ title, subtitle, largeTitle, backLabel = "Back", onBack, trailing }: Props) => {
   const handleBack = async () => {
     await haptic("light");
     onBack?.();
@@ -19,8 +20,8 @@ const NativeNavBar = ({ title, largeTitle, backLabel = "Back", onBack, trailing 
   return (
     <header className="native-nav">
       <div
-        className="flex items-center justify-between px-2"
-        style={{ minHeight: "var(--native-nav-height)" }}
+        className={`flex items-center justify-between px-3 ${subtitle ? "py-3.5" : ""}`}
+        style={{ minHeight: subtitle ? "72px" : "var(--native-nav-height)" }}
       >
         <div className="min-w-[72px] flex items-center">
           {onBack ? (
@@ -35,9 +36,16 @@ const NativeNavBar = ({ title, largeTitle, backLabel = "Back", onBack, trailing 
           ) : null}
         </div>
 
-        <p className="flex-1 text-center text-[17px] font-semibold font-sans text-foreground truncate px-2">
-          {!largeTitle ? title : null}
-        </p>
+        <div className="min-w-0 flex-1 px-3 text-center">
+          {!largeTitle ? (
+            <>
+              <p className="truncate text-[17px] font-bold leading-none tracking-[-0.03em] text-foreground">{title}</p>
+              {subtitle ? (
+                <p className="mt-1.5 truncate text-[13px] font-medium leading-none text-[#71677F]">{subtitle}</p>
+              ) : null}
+            </>
+          ) : null}
+        </div>
 
         <div className="min-w-[72px] flex items-center justify-end gap-1">{trailing}</div>
       </div>

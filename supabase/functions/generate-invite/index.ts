@@ -19,6 +19,7 @@ const json = (body: unknown, status = 200) =>
 interface Payload {
   childName?: string;
   age?: string | number;
+  inspiration?: string;
   film?: string;
   food?: string;
   dreamJob?: string;
@@ -33,7 +34,7 @@ House style:
 - Warm, elegant, lightly witty. Never garish, never twee, no exclamation-mark spam.
 - One exclamation mark maximum across the whole blurb, and usually none.
 - 25 to 45 words. This sits on an invitation card, so it must breathe.
-- Reference the three details naturally. Do not list them, do not label them, and never write them as "favourite film: X".
+- Reference the single detail naturally. Do not label it, and never write it as "favourite thing: X".
 - No emoji. No hashtags. No "Join us as we celebrate" boilerplate.
 - Do not state the date, time or venue. Those are printed separately on the card.
 - Do not name copyrighted characters or franchises; use mood and theme instead.
@@ -83,11 +84,12 @@ serve(async (req) => {
     return json({ error: "Invalid JSON body" }, 400);
   }
 
-  const { childName, age, film, food, dreamJob, partyType = "kids" } = payload;
+  const { childName, age, partyType = "kids" } = payload;
+  const inspiration = (payload.inspiration || payload.film || "").trim();
 
-  if (!film?.trim() || !food?.trim() || !dreamJob?.trim()) {
+  if (!inspiration) {
     return json(
-      { error: "Please fill in all three answers before generating." },
+      { error: "Add one thing they love before generating." },
       400,
     );
   }
@@ -102,10 +104,8 @@ serve(async (req) => {
       isAdult ? "birthday party (adult guests)" : "children's birthday party"
     }.${ageLine}
 
-Three things about them:
-- Favourite film: ${film.trim()}
-- Favourite food: ${food.trim()}
-- Dream job: ${dreamJob.trim()}
+One thing they love. Use only this, and do not invent extra hobbies or foods:
+${inspiration}
 
 Give one whimsical, one heartfelt and one witty option.`;
 

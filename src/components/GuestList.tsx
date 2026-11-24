@@ -1,4 +1,3 @@
-import { Badge } from "@/components/ui/badge";
 import type { Tables } from "@/integrations/supabase/types";
 
 interface Props {
@@ -6,49 +5,64 @@ interface Props {
 }
 
 const GuestList = ({ guests }: Props) => {
-  const attending = guests.filter((g) => g.rsvp_status === "attending");
-  const notAttending = guests.filter((g) => g.rsvp_status === "not_attending");
-  const pending = guests.filter((g) => g.rsvp_status === "pending");
+  const coming = guests.filter((guest) => guest.rsvp_status === "attending");
+  const declined = guests.filter((guest) => guest.rsvp_status === "not_attending");
+  const waiting = guests.filter((guest) => guest.rsvp_status === "pending");
 
-  const sections = [
-    { title: "Attending", guests: attending },
-    { title: "Not attending", guests: notAttending },
-    { title: "No response", guests: pending },
-  ];
+  if (guests.length === 0) {
+    return (
+      <p className="rounded-[22px] bg-white px-5 py-6 text-[15px] leading-relaxed text-[#71677F] shadow-[0_8px_24px_rgba(40,32,53,0.04)]">
+        No replies yet. Share the invitation and they'll appear here.
+      </p>
+    );
+  }
 
   return (
     <div className="space-y-5">
-      {sections.map((section) => (
-        <div key={section.title}>
-          <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
-            {section.title} ({section.guests.length})
-          </h4>
-          {section.guests.length === 0 ? (
-            <p className="text-sm text-muted-foreground/50 pl-1">None yet</p>
-          ) : (
-            <div className="space-y-2">
-              {section.guests.map((guest) => (
-                <div key={guest.id} className="flex items-center justify-between p-3 rounded-lg bg-accent/50">
-                  <div>
-                    <p className="font-medium text-foreground text-sm">{guest.name}</p>
-                    <p className="text-xs text-muted-foreground">{guest.email}</p>
-                    {guest.dietary_notes && (
-                      <p className="text-xs text-muted-foreground mt-1">{guest.dietary_notes}</p>
-                    )}
-                  </div>
-                  {guest.rsvp_status === "attending" && guest.contribution_status === "paid" && (
-                    <Badge variant="outline" className="text-xs">
-                      Paid
-                    </Badge>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      ))}
+      <Group title="Coming" count={coming.length} guests={coming} tone="#32936A" />
+      <Group title="Can't make it" count={declined.length} guests={declined} tone="#71677F" />
+      {waiting.length > 0 ? <Group title="Awaiting reply" count={waiting.length} guests={waiting} tone="#6B7AFF" /> : null}
     </div>
   );
 };
+
+const Group = ({
+  title,
+  count,
+  guests,
+  tone,
+}: {
+  title: string;
+  count: number;
+  guests: Tables<"guests">[];
+  tone: string;
+}) => (
+  <div>
+    <p className="mb-2 flex items-center gap-2 text-[14px] font-bold text-[#282035]">
+      <span className="h-2 w-2 rounded-full" style={{ background: tone }} />
+      {title}
+      <span className="font-semibold text-[#71677F]">{count}</span>
+    </p>
+    {guests.length === 0 ? (
+      <p className="pl-4 text-[14px] text-[#71677F]">No one yet</p>
+    ) : (
+      <ul className="space-y-2">
+        {guests.map((guest) => (
+          <li key={guest.id} className="rounded-[18px] bg-white px-4 py-3 shadow-[0_8px_24px_rgba(40,32,53,0.04)]">
+            <div className="flex items-baseline justify-between gap-3">
+              <p className="text-[15px] font-bold tracking-[-0.02em] text-[#282035]">{guest.name}</p>
+              {guest.contribution_status === "paid" ? (
+                <span className="text-[12px] font-semibold text-[#32936A]">Chipped in</span>
+              ) : null}
+            </div>
+            {guest.dietary_notes ? (
+              <p className="mt-1 text-[13px] leading-relaxed text-[#71677F]">{guest.dietary_notes}</p>
+            ) : null}
+          </li>
+        ))}
+      </ul>
+    )}
+  </div>
+);
 
 export default GuestList;

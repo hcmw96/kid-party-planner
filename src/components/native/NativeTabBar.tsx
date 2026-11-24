@@ -37,8 +37,8 @@ const NativeTabBar = () => {
                 await haptic("light");
                 navigate(path);
               }}
-              className={`flex flex-col items-center justify-center gap-0.5 pt-1.5 ${
-                active ? "text-foreground" : "text-muted-foreground"
+              className={`tab-press flex flex-col items-center justify-center gap-0.5 pt-1.5 ${
+                active ? "text-primary" : "text-muted-foreground"
               }`}
             >
               <Icon

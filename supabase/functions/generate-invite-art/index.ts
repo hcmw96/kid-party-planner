@@ -18,9 +18,8 @@ const corsHeaders = {
 type ArtInput = {
   childName?: string;
   age?: string | number;
+  inspiration?: string;
   film?: string;
-  food?: string;
-  dreamJob?: string;
   partyType?: string;
 };
 
@@ -83,47 +82,44 @@ serve(async (req) => {
     const body = (await req.json()) as ArtInput;
     const childName = (body.childName ?? "").trim();
     const age = String(body.age ?? "").trim();
-    const film = neutraliseProperNouns(body.film ?? "");
-    const food = neutraliseProperNouns(body.food ?? "");
-    const dreamJob = neutraliseProperNouns(body.dreamJob ?? "");
+    const inspiration = neutraliseProperNouns(body.inspiration || body.film || "");
     const partyType = (body.partyType ?? "birthday").trim() || "birthday";
 
-    if (!childName || !film || !food || !dreamJob) {
+    if (!childName || !inspiration) {
       return jsonResponse(
-        { error: "childName, film, food and dreamJob are required." },
+        { error: "A name and one thing they love are required." },
         400,
       );
     }
 
     // --- Pass 1: art direction (strip characters / franchises) ---
-    const directionSystem = `You design restrained invitation artwork for a UK children's party product
-aimed at prep-school parents. Reference point: Paperless Post.
+    const directionSystem = `You design invitation artwork for a young child's birthday party.
+A parent should glance at it and immediately see what the child loves.
+It should feel joyful and celebratory, like a birthday card, not a spa, a wedding, or abstract art.
 
 Return ONLY valid JSON:
 {
-  "palette": "3-5 hex colours or short colour names",
-  "motifs": "abstract decorative motifs only",
+  "palette": "3-5 bright, clear colours",
+  "motifs": "the specific objects to draw",
   "mood": "one short mood sentence",
   "imagePrompt": "a single image-generation prompt",
-  "caption": "6-10 word UI caption"
+  "caption": "6-10 word UI caption a parent would understand"
 }
 
 Hard rules for imagePrompt:
-- Abstract or decorative only: borders, washes, textures, botanical/geometric motifs.
+- Draw the subject clearly. Astronaut means a rocket, stars, a moon and planets. Football means a sunny pitch and a ball. Dinosaurs means friendly dinosaurs and ferns.
+- Use that one idea only. Do not add unrelated hobbies, foods or jobs.
+- Make it obviously for a child: playful shapes, cheerful colour, a sense of a party.
 - Never depict named characters, logos, mascots, costumes, or franchise-specific designs.
-- Never include proper nouns from films, TV, games or brands.
-- Translate any film/food/job answers into generic themes and palette cues.
-  Example: a London-bear film → marmalade amber, navy duffel texture, red hat ribbon motif — not a bear.
-- No readable text, letters, numbers or watermarks in the image.
-- Soft, elegant, print-ready; never clip-art, cartoon sticker sheets, or 3D CGI toys.
-- Artwork sits behind typography, so leave calm central negative space.`;
+- Never include proper nouns from films, TV, games or brands. A bear film becomes a simple friendly bear, not a branded one.
+- No readable text, letters, numbers or watermarks.
+- Not a pale empty wash. Not clip-art sticker sheets. Not photorealistic.
+- Leave the lower middle fairly calm so a name can sit on top, but the theme must fill the rest of the picture.`;
 
-    const directionUser = `Create one art direction for this party invitation.
-Child first name only (do not letter the image): ${childName}${age ? `, age ${age}` : ""}
-Party type: ${partyType}
-Favourite film (theme only, never characters): ${film}
-Favourite food (palette/motif only): ${food}
-Dream job (atmosphere only): ${dreamJob}`;
+    const directionUser = `Paint a children's birthday invitation background.
+Child first name only (do not letter the image): ${childName}${age ? `, turning ${age}` : ""}
+The one thing they love, drawn so a child would recognise it:
+${inspiration}`;
 
     const directionRes = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
@@ -167,11 +163,12 @@ Dream job (atmosphere only): ${dreamJob}`;
     }
 
     const safeImagePrompt = [
+      "Children's birthday party invitation illustration.",
       direction.imagePrompt.trim(),
-      "Strictly forbidden: named characters, celebrity likenesses, logos, trademarks,",
-      "franchise costumes, mascots, or any recognisable branded design.",
-      "Abstract decorative invitation background only, calm centre for typography,",
-      "no text in the image.",
+      "The subject must be obvious at a glance. Joyful, colourful, playful.",
+      "No named characters, celebrity likenesses, logos, trademarks or branded costumes.",
+      "No text, letters or numbers anywhere in the image.",
+      "Keep the lower middle quieter so a name can be placed on top.",
     ].join(" ");
 
     // --- Pass 2: image generation ---

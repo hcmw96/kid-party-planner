@@ -1,123 +1,96 @@
 import type { InvitationTemplate } from "@/lib/templates";
+import ThemeArtwork from "@/components/invitation/ThemeArtwork";
+import balloonIcon from "@/assets/balloon-icon.png";
 
 interface Props {
   template: InvitationTemplate;
   childName: string;
-  date: string;
+  age?: number | null;
+  dateLabel: string;
+  timeLabel?: string | null;
   location: string;
-  description?: string | null;
+  note?: string | null;
   artUrl?: string | null;
+  variant?: "card" | "poster";
+  onRsvp?: () => void;
 }
 
 const InvitationCard = ({
   template,
   childName,
-  date,
+  age,
+  dateLabel,
+  timeLabel,
   location,
-  description,
+  note,
   artUrl,
+  variant = "card",
+  onRsvp,
 }: Props) => {
-  const partyDate = new Date(date).toLocaleDateString("en-GB", {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
-
-  const initial = childName.charAt(0).toUpperCase();
-  const hasArt = !!artUrl;
+  const name = childName.trim() || "The birthday star";
+  const poster = variant === "poster";
 
   return (
-    <div
-      className="w-full animate-fade-in relative overflow-hidden"
-      style={{
-        backgroundColor: template.palette.background,
-        color: template.palette.text,
-        fontFamily: template.fontFamily,
-      }}
+    <article
+      className="relative overflow-hidden"
+      style={{ background: template.palette.background, color: template.palette.text }}
     >
-      {hasArt && (
-        <>
-          <img
-            src={artUrl}
-            alt=""
-            className="absolute inset-0 w-full h-full object-cover"
-          />
-          <div
-            className="absolute inset-0"
-            style={{
-              background: `linear-gradient(180deg, ${template.palette.background}CC 0%, ${template.palette.background}E6 45%, ${template.palette.background}F2 100%)`,
-            }}
-          />
-        </>
-      )}
-
-      <div className="max-w-md mx-auto px-8 py-16 relative">
-        {/* Decorative border */}
+      <div className={`relative ${poster ? "h-48" : "h-64"}`}>
+        {artUrl ? (
+          <img src={artUrl} alt="" className="absolute inset-0 h-full w-full object-cover" />
+        ) : (
+          <ThemeArtwork id={template.id} />
+        )}
         <div
-          className="absolute inset-6 border"
-          style={{ borderColor: template.palette.accent + "30" }}
+          className="absolute inset-x-0 bottom-0 h-16"
+          style={{
+            background: `linear-gradient(to bottom, transparent, ${template.palette.background})`,
+          }}
         />
-
-        <div className="text-center space-y-8 relative z-10">
-          {/* Monogram for classic cream */}
-          {template.id === "classic_cream" && !hasArt && (
-            <div
-              className="w-16 h-16 rounded-full border-2 flex items-center justify-center mx-auto text-3xl font-display"
-              style={{
-                borderColor: template.palette.accent,
-                color: template.palette.accent,
-              }}
-            >
-              {initial}
-            </div>
-          )}
-
-          <div className="space-y-2">
-            <p
-              className="text-xs tracking-[0.2em] uppercase font-sans"
-              style={{ color: template.palette.muted }}
-            >
-              You're invited to
-            </p>
-
-            {/* Gold rule for midnight disco */}
-            {template.id === "midnight_disco" && (
-              <div
-                className="w-16 h-px mx-auto mb-4"
-                style={{ backgroundColor: template.palette.accent }}
-              />
-            )}
-
-            <h1
-              className="text-4xl font-semibold leading-tight"
-              style={{
-                fontStyle: template.fontStyle || "normal",
-                textTransform: template.textTransform || "none",
-                letterSpacing: template.letterSpacing || "normal",
-              }}
-            >
-              {childName}'s Party
-            </h1>
-
-            <div
-              className="w-12 h-px mx-auto mt-4"
-              style={{ backgroundColor: template.palette.accent }}
-            />
-          </div>
-
-          <div className="space-y-3 font-sans text-sm" style={{ color: template.palette.muted }}>
-            <p>{partyDate}</p>
-            <p>{location}</p>
-            {description && (
-              <p className="whitespace-pre-line pt-3 leading-relaxed text-[13px]">
-                {description}
-              </p>
-            )}
-          </div>
-        </div>
       </div>
-    </div>
+
+      <div className={`relative px-6 text-center ${poster ? "pb-5" : "px-7 pb-8"}`}>
+        <p className="text-[15px] font-semibold" style={{ color: template.palette.accent }}>
+          {template.headline}
+        </p>
+        <h1 className="mt-2 text-[2.6rem] font-extrabold leading-[0.95] tracking-[-0.045em]">
+          {name}
+        </h1>
+        <p className="mt-2 text-[1.25rem] font-medium leading-snug tracking-[-0.02em]">
+          {age ? `is turning ${age}` : "is having a birthday"}
+        </p>
+
+        <dl className="mt-6 space-y-1 text-[15px]" style={{ color: template.palette.muted }}>
+          <div>
+            <dt className="sr-only">When</dt>
+            <dd>{[dateLabel, timeLabel].filter(Boolean).join(" · ")}</dd>
+          </div>
+          <div>
+            <dt className="sr-only">Where</dt>
+            <dd>{location || "Somewhere lovely"}</dd>
+          </div>
+        </dl>
+
+        {!poster && note ? (
+          <p className="mx-auto mt-5 max-w-xs whitespace-pre-line text-[15px] leading-relaxed" style={{ color: template.palette.text }}>
+            {note}
+          </p>
+        ) : null}
+
+        {!poster && onRsvp ? (
+          <button type="button" onClick={onRsvp} className="ink-button mt-7">
+            Can you come?
+          </button>
+        ) : null}
+
+        {!poster ? (
+          <p className="mt-6 inline-flex items-center gap-1.5 text-[12px] font-semibold tracking-[-0.01em]" style={{ color: template.palette.muted }}>
+            <img src={balloonIcon} alt="" className="h-4 w-4 object-contain" />
+            PartyPal
+          </p>
+        ) : null}
+      </div>
+    </article>
   );
 };
 

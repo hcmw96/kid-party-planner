@@ -2,7 +2,9 @@ export interface InvitationTemplate {
   id: string;
   name: string;
   description: string;
+  headline: string;
   mood: string;
+  dark?: boolean;
   palette: {
     background: string;
     card: string;
@@ -16,83 +18,141 @@ export interface InvitationTemplate {
   textTransform?: "uppercase" | "none";
 }
 
+const sans = "'Manrope', system-ui, sans-serif";
+
 export const templates: InvitationTemplate[] = [
   {
-    id: "classic_cream",
-    name: "Classic Cream",
-    description: "Timeless elegance for any occasion",
-    mood: "A wedding invitation energy applied to a children's party",
+    id: "rainbow",
+    name: "Rainbow",
+    description: "Soft arcs, after the rain",
+    headline: "Colour, cake and everyone you love",
+    mood: "A bright day, quietly composed",
     palette: {
-      background: "#FAF6F1",
+      background: "#FFF8FB",
       card: "#FFFFFF",
-      text: "#1C1C1E",
-      accent: "#B8A089",
-      muted: "#9B9898",
+      text: "#282035",
+      accent: "#F34AA5",
+      muted: "#71677F",
     },
-    fontFamily: "'Playfair Display', serif",
+    fontFamily: sans,
   },
   {
-    id: "garden_party",
-    name: "Garden Party",
-    description: "For the classic summer birthday",
-    mood: "A note tucked into a summer bouquet",
+    id: "dinosaurs",
+    name: "Dinosaurs",
+    description: "Ferns, footprints, warm stone",
+    headline: "Stomp on over",
+    mood: "A prehistoric afternoon",
     palette: {
-      background: "#F0F4EC",
-      card: "#FAFCF8",
-      text: "#2D3A2E",
-      accent: "#8A9E8C",
-      muted: "#A3B5A5",
+      background: "#F3F0E4",
+      card: "#FBF8F0",
+      text: "#243028",
+      accent: "#3E7A4F",
+      muted: "#6A7364",
     },
-    fontFamily: "'Cormorant Garamond', serif",
-    fontStyle: "italic",
+    fontFamily: sans,
   },
   {
-    id: "midnight_disco",
-    name: "Midnight Disco",
-    description: "For the child who wants something cool",
-    mood: "A gilt-edged invitation to something exclusive",
+    id: "space",
+    name: "Space",
+    description: "A pale planet and a pink star",
+    headline: "One small step, one big birthday",
+    mood: "Night sky, held gently",
+    dark: true,
     palette: {
-      background: "#1A1F3C",
-      card: "#232848",
-      text: "#F5F0E8",
-      accent: "#C9A96E",
-      muted: "#8B8FAA",
+      background: "#14182B",
+      card: "#1C2140",
+      text: "#F7F4FF",
+      accent: "#F34AA5",
+      muted: "#B7B4D6",
     },
-    fontFamily: "'Playfair Display', serif",
-    textTransform: "uppercase",
-    letterSpacing: "0.15em",
+    fontFamily: sans,
   },
   {
-    id: "paintbox",
-    name: "Paintbox",
-    description: "Creative and expressive, never childish",
-    mood: "An invite you'd find in a Tate Members bag",
+    id: "football",
+    name: "Football",
+    description: "A sunlit pitch, kick-off soon",
+    headline: "Kick-off is this birthday",
+    mood: "Saturday on the grass",
     palette: {
-      background: "#FAF6F1",
+      background: "#F4F7F2",
       card: "#FFFFFF",
-      text: "#2C2420",
-      accent: "#C4703F",
-      muted: "#5A8A87",
+      text: "#1C2B22",
+      accent: "#32936A",
+      muted: "#5E6B62",
     },
-    fontFamily: "'Cormorant Garamond', serif",
+    fontFamily: sans,
   },
   {
-    id: "wildflower",
-    name: "Wildflower",
-    description: "Bohemian, outdoorsy, Cotswolds-summer",
-    mood: "A note pinned to a farm gate",
+    id: "fairy",
+    name: "Fairy garden",
+    description: "Blossom, moss and fireflies",
+    headline: "A little magic in the garden",
+    mood: "Dusk among the flowers",
     palette: {
-      background: "#FBF3EE",
-      card: "#FFFEF9",
-      text: "#3A3028",
-      accent: "#C9A99A",
-      muted: "#8A9E8C",
+      background: "#FBF6FB",
+      card: "#FFFFFF",
+      text: "#3A2740",
+      accent: "#C86BBE",
+      muted: "#8A7390",
     },
-    fontFamily: "'Cormorant Garamond', serif",
-    letterSpacing: "0.08em",
+    fontFamily: sans,
+  },
+  {
+    id: "safari",
+    name: "Safari",
+    description: "Ochre sun, one acacia",
+    headline: "Pack your sense of adventure",
+    mood: "Late light on the plain",
+    palette: {
+      background: "#F8F1E6",
+      card: "#FFF9F1",
+      text: "#3A2A1C",
+      accent: "#D07A3A",
+      muted: "#8A7058",
+    },
+    fontFamily: sans,
+  },
+  {
+    id: "sea",
+    name: "Under the sea",
+    description: "Tide pools and soft coral",
+    headline: "Dive in, the party's this way",
+    mood: "Clear water, late afternoon",
+    palette: {
+      background: "#E7F6F6",
+      card: "#F5FCFC",
+      text: "#12343A",
+      accent: "#1F8A9A",
+      muted: "#5C7C82",
+    },
+    fontFamily: sans,
+  },
+  {
+    id: "classic",
+    name: "Classic birthday",
+    description: "The balloon, and very little else",
+    headline: "Come and celebrate",
+    mood: "The PartyPal birthday",
+    palette: {
+      background: "#F9F7FC",
+      card: "#FFFFFF",
+      text: "#282035",
+      accent: "#6B7AFF",
+      muted: "#71677F",
+    },
+    fontFamily: sans,
   },
 ];
 
+const aliases: Record<string, string> = {
+  classic_cream: "classic",
+  garden_party: "fairy",
+  midnight_disco: "space",
+  paintbox: "rainbow",
+  wildflower: "safari",
+};
+
 export const getTemplate = (id: string): InvitationTemplate => {
-  return templates.find((t) => t.id === id) || templates[0];
+  const resolved = aliases[id] ?? id;
+  return templates.find((template) => template.id === resolved) ?? templates[7];
 };

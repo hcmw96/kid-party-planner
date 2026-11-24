@@ -1,41 +1,18 @@
-import { useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { useEvent } from "@/hooks/useEvent";
-import { getTemplate } from "@/lib/templates";
-import InvitationCard from "@/components/InvitationCard";
-import RSVPForm from "@/components/RSVPForm";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Gift } from "lucide-react";
-import { setStatusBarTextColor, setStatusBarColor } from "@/lib/despia";
+import GuestInvite from "@/components/GuestInvite";
 
 const PartyPage = () => {
   const { eventId } = useParams<{ eventId: string }>();
   const { data: event, isLoading, error } = useEvent(eventId);
 
-  useEffect(() => {
-    if (!event) return;
-    const templateId = (event as { template?: string }).template || "classic_cream";
-    if (templateId === "midnight_disco") {
-      void setStatusBarColor("{26, 31, 60}");
-      void setStatusBarTextColor("white");
-    } else {
-      void setStatusBarColor("{247, 245, 242}");
-      void setStatusBarTextColor("black");
-    }
-    return () => {
-      void setStatusBarColor("{247, 245, 242}");
-      void setStatusBarTextColor("black");
-    };
-  }, [event]);
-
   if (isLoading) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center px-6">
-        <div className="w-full max-w-md space-y-6">
-          <Skeleton className="h-64 w-full rounded-lg" />
-          <Skeleton className="h-8 w-3/4 mx-auto" />
-          <Skeleton className="h-4 w-1/2 mx-auto" />
-          <Skeleton className="h-48 w-full rounded-lg" />
+      <div className="page-scrollable h-full bg-[#F9F7FC]">
+        <div className="mx-auto max-w-md space-y-4 px-5 py-16">
+          <div className="h-56 animate-pulse rounded-[24px] bg-[#EAE2F8]" />
+          <div className="mx-auto h-8 w-2/3 animate-pulse rounded-full bg-[#EAE2F8]" />
+          <div className="h-14 animate-pulse rounded-2xl bg-white" />
         </div>
       </div>
     );
@@ -43,59 +20,18 @@ const PartyPage = () => {
 
   if (error || !event) {
     return (
-      <div className="min-h-screen flex items-center justify-center text-muted-foreground font-sans">
-        Party not found
+      <div className="flex h-full items-center justify-center bg-[#F9F7FC] px-6 text-center">
+        <div>
+          <p className="text-[1.4rem] font-extrabold tracking-[-0.04em] text-[#282035]">We can't find that party</p>
+          <p className="mt-2 text-[15px] text-[#71677F]">The link may have been mistyped.</p>
+        </div>
       </div>
     );
   }
 
-  const template = getTemplate((event as any).template || "classic_cream");
-  const showGift = event.gift_enabled && event.gift_amount && event.gift_amount > 0;
-  const giftAmount = showGift ? (event.gift_amount! / 100).toFixed(2) : null;
-
-  const scrollToRSVP = () => {
-    document.getElementById("rsvp-form")?.scrollIntoView({ behavior: "smooth", block: "start" });
-  };
-
   return (
-    <div className="h-full page-scrollable animate-fade-in">
-      {/* Invitation card — full-width themed hero */}
-      <InvitationCard
-        template={template}
-        childName={event.child_name}
-        date={event.date}
-        location={event.location}
-        description={(event as any).description}
-        artUrl={(event as any).art_url}
-      />
-
-      {/* Gift callout — visible before RSVP */}
-      {showGift && (
-        <div className="px-6 pt-8 max-w-md mx-auto">
-          <div className="rounded-lg border border-border bg-accent/40 p-5 text-center space-y-3">
-            <div className="flex items-center justify-center gap-2">
-              <Gift className="h-4 w-4 text-foreground" strokeWidth={1.5} />
-              <span className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-sans">
-                Group gift
-              </span>
-            </div>
-            <p className="text-sm text-foreground font-sans leading-relaxed">
-              Chip in <span className="font-semibold">£{giftAmount}</span> towards a present for {event.child_name}
-            </p>
-            <button
-              onClick={scrollToRSVP}
-              className="text-[11px] uppercase tracking-[0.15em] font-sans text-muted-foreground hover:text-foreground transition-colors underline underline-offset-4"
-            >
-              RSVP below to chip in
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* RSVP Form — base UI below the card */}
-      <div id="rsvp-form" className="px-6 py-10 max-w-md mx-auto">
-        <RSVPForm event={event} />
-      </div>
+    <div className="page-scrollable h-full bg-[#F9F7FC]">
+      <GuestInvite event={event} />
     </div>
   );
 };

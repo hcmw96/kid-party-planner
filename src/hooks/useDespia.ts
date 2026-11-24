@@ -23,7 +23,8 @@ export function useDespia() {
 
   useEffect(() => {
     if (!isDespia) return;
-    void setStatusBarColor("{247, 245, 242}");
+    // Ice-blue canvas matching --background (#EEF6FF)
+    void setStatusBarColor("{238, 246, 255}");
     void setStatusBarTextColor("black");
   }, []);
 
