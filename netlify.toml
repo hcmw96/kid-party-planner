@@ -7,6 +7,24 @@
   VITE_SUPABASE_URL = "https://gbkfxfqjavvojewjwkvq.supabase.co"
   VITE_PUBLIC_SITE_URL = "https://partypalapp.netlify.app"
 
+[functions]
+  node_bundler = "esbuild"
+  external_node_modules = ["@resvg/resvg-wasm"]
+
+[functions.og]
+  included_files = ["node_modules/@resvg/resvg-wasm/index_bg.wasm", "netlify/functions/fonts/*.ttf"]
+
+[[edge_functions]]
+  function = "party-preview"
+  path = "/party/*"
+
+# WhatsApp and iMessage request this image. Keep it ahead of the SPA rewrite.
+[[redirects]]
+  from = "/og/:id"
+  to = "/.netlify/functions/og?id=:id"
+  status = 200
+  force = true
+
 [[redirects]]
   from = "/*"
   to = "/index.html"

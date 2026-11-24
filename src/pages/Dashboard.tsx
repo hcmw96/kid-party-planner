@@ -14,6 +14,7 @@ import NativeNavBar from "@/components/native/NativeNavBar";
 import { Field, FieldArea } from "@/components/design/Field";
 import AddressField from "@/components/AddressField";
 import { getShareUrl } from "@/lib/shareUrl";
+import { shareMessage } from "@/lib/sharePreview";
 import { getTemplate } from "@/lib/templates";
 import { ageFromTitle, birthdayTitle, countdownLabel, formatPartyDate, formatUkDate, splitPartyNotes } from "@/lib/party";
 import {
@@ -81,7 +82,16 @@ const Dashboard = () => {
 
   const handleShare = async () => {
     try {
-      await nativeShare(`Come to ${event.child_name}'s party`, shareUrl);
+      await nativeShare(
+        shareMessage({
+          childName: event.child_name,
+          title: event.title,
+          date: event.date,
+          location: event.location,
+          description: event.description,
+        }),
+        shareUrl,
+      );
       await haptic("success");
       if (!isDespia) toast.success("Link ready");
     } catch {

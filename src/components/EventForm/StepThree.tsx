@@ -5,6 +5,7 @@ import type { EventFormData } from "@/lib/eventForm";
 import { getTemplate } from "@/lib/templates";
 import { ageFromTitle, birthdayTitle, composeDescription, formatPartyDate, splitPartyNotes } from "@/lib/party";
 import { getShareUrl } from "@/lib/shareUrl";
+import { shareMessage } from "@/lib/sharePreview";
 import InvitationCard from "@/components/InvitationCard";
 import Confetti from "@/components/design/Confetti";
 
@@ -12,9 +13,6 @@ interface Props {
   eventId: string;
   formData: EventFormData;
 }
-
-const whatsAppHref = (name: string, url: string) =>
-  `https://wa.me/?text=${encodeURIComponent(`You're invited to ${name}'s party.\n${url}`)}`;
 
 const StepThree = ({ eventId, formData }: Props) => {
   const [copied, setCopied] = useState(false);
@@ -27,6 +25,14 @@ const StepThree = ({ eventId, formData }: Props) => {
   });
   const { timeLabel, body } = splitPartyNotes(description);
   const title = birthdayTitle(formData.childName, formData.age);
+  const message = shareMessage({
+    childName: formData.childName,
+    title,
+    date: formData.date,
+    location: formData.location,
+    description,
+  });
+  const whatsAppHref = `https://wa.me/?text=${encodeURIComponent(`${message}\n${shareUrl}`)}`;
 
   const handleCopy = async () => {
     try {
@@ -65,7 +71,7 @@ const StepThree = ({ eventId, formData }: Props) => {
         />
       </div>
 
-      <a className="ink-button" href={whatsAppHref(formData.childName, shareUrl)} target="_blank" rel="noreferrer">
+      <a className="ink-button" href={whatsAppHref} target="_blank" rel="noreferrer">
         Share on WhatsApp
       </a>
       <button type="button" onClick={() => void handleCopy()} className="soft-button">
