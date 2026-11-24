@@ -1,4 +1,4 @@
-import { ageFromTitle, formatPartyDate, splitPartyNotes } from "./party";
+import { ageFromTitle, formatPartyDate, splitPartyNotes } from "./party.ts";
 
 const EVENT_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 

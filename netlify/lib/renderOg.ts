@@ -1,7 +1,6 @@
 import { existsSync } from "node:fs";
 import { readFile } from "node:fs/promises";
-import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
+import { join } from "node:path";
 import { encode as encodeJpeg } from "jpeg-js";
 import { Resvg, initWasm } from "@resvg/resvg-wasm";
 import { buildOgSvg, type OgCard } from "../../src/lib/ogCard";
@@ -16,12 +15,8 @@ function locate(candidates: string[]): string {
 }
 
 async function ensureReady(): Promise<Uint8Array[]> {
-  const here = dirname(fileURLToPath(import.meta.url));
   if (!fonts) {
-    const dir = locate([
-      join(process.cwd(), "netlify/functions/fonts"),
-      join(here, "fonts"),
-    ]);
+    const dir = locate([join(process.cwd(), "netlify/lib/fonts")]);
     const [extraBold, medium] = await Promise.all([
       readFile(join(dir, "Manrope-ExtraBold.ttf")),
       readFile(join(dir, "Manrope-Medium.ttf")),
@@ -29,10 +24,7 @@ async function ensureReady(): Promise<Uint8Array[]> {
     fonts = [new Uint8Array(extraBold), new Uint8Array(medium)];
   }
   if (!ready) {
-    const wasmPath = locate([
-      join(process.cwd(), "node_modules/@resvg/resvg-wasm/index_bg.wasm"),
-      join(here, "../../node_modules/@resvg/resvg-wasm/index_bg.wasm"),
-    ]);
+    const wasmPath = locate([join(process.cwd(), "node_modules/@resvg/resvg-wasm/index_bg.wasm")]);
     ready = readFile(wasmPath).then((wasm) => initWasm(wasm));
   }
   await ready;

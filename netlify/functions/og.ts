@@ -1,5 +1,5 @@
 import { getTemplate } from "../../src/lib/templates";
-import { artworkHref, renderOgJpeg } from "./renderOg";
+import { artworkHref, renderOgJpeg } from "../lib/renderOg";
 import {
   cardCopy,
   fetchPublicEvent,
