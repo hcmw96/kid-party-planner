@@ -6,6 +6,7 @@ import type { EventFormData } from "@/pages/CreateEvent";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Loader2, Sparkles } from "lucide-react";
+import { haptic, showSpinner, hideSpinner } from "@/lib/despia";
 
 interface Props {
   formData: EventFormData;
@@ -43,6 +44,8 @@ const StepTemplate = ({ formData, updateField, onBack, onNext }: Props) => {
       return;
     }
     setArtLoading(true);
+    await showSpinner();
+    await haptic("light");
     try {
       const { data, error } = await supabase.functions.invoke("generate-invite-art", {
         body: {
@@ -60,14 +63,18 @@ const StepTemplate = ({ formData, updateField, onBack, onNext }: Props) => {
       setLastArtUrl(data.art_url);
       updateField("artUrl", data.art_url);
       setArtCaption(data.art_direction?.caption ?? "Custom artwork");
+      await haptic("success");
     } catch (err) {
+      await haptic("error");
       toast.error(err instanceof Error ? err.message : "Couldn’t generate artwork");
     } finally {
+      await hideSpinner();
       setArtLoading(false);
     }
   };
 
   const selectTemplate = (templateId: string) => {
+    void haptic("light");
     updateField("template", templateId);
     updateField("artUrl", null);
   };

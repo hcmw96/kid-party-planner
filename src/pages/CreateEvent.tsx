@@ -8,6 +8,13 @@ import StepInvite from "@/components/EventForm/StepInvite";
 import StepTemplate from "@/components/EventForm/StepTemplate";
 import StepTwo from "@/components/EventForm/StepTwo";
 import StepThree from "@/components/EventForm/StepThree";
+import NativeNavBar from "@/components/native/NativeNavBar";
+import {
+  haptic,
+  showSpinner,
+  hideSpinner,
+  maybeRequestRatingAfterFirstParty,
+} from "@/lib/despia";
 
 export interface EventFormData {
   childName: string;
@@ -25,6 +32,8 @@ export interface EventFormData {
   giftEnabled: boolean;
   giftAmount: string;
 }
+
+const STEP_TITLES = ["Details", "Wording", "Design", "Gift", "Done"] as const;
 
 const CreateEvent = () => {
   const { user, loading: authLoading } = useAuth();
@@ -51,10 +60,10 @@ const CreateEvent = () => {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="w-full max-w-md px-6 space-y-4">
+      <div className="animate-fade-in">
+        <NativeNavBar title="New party" onBack={() => navigate("/parties")} />
+        <div className="w-full max-w-md mx-auto px-6 py-8 space-y-4">
           <div className="h-6 bg-muted rounded animate-pulse w-1/2" />
-          <div className="h-10 bg-muted rounded animate-pulse" />
           <div className="h-10 bg-muted rounded animate-pulse" />
           <div className="h-10 bg-muted rounded animate-pulse" />
         </div>
@@ -67,14 +76,23 @@ const CreateEvent = () => {
     return null;
   }
 
-  const updateField = (field: keyof EventFormData, value: any) => {
+  const updateField = (field: keyof EventFormData, value: unknown) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const goNext = async (next: number) => {
+    await haptic("light");
+    setStep(next);
   };
 
   const handleCreate = async () => {
     setSubmitting(true);
+    await showSpinner();
+    await haptic("heavy");
     try {
-      const amountPence = formData.giftEnabled ? Math.round(parseFloat(formData.giftAmount) * 100) : 0;
+      const amountPence = formData.giftEnabled
+        ? Math.round(parseFloat(formData.giftAmount) * 100)
+        : 0;
       const { data, error } = await supabase
         .from("events")
         .insert({
@@ -96,54 +114,76 @@ const CreateEvent = () => {
       if (error) throw error;
       setEventId(data.id);
       setStep(5);
-    } catch (err: any) {
-      toast.error(err.message || "Failed to create event");
+      await haptic("success");
+      maybeRequestRatingAfterFirstParty();
+    } catch (err: unknown) {
+      await haptic("error");
+      toast.error(err instanceof Error ? err.message : "Failed to create event");
     } finally {
+      await hideSpinner();
       setSubmitting(false);
     }
   };
 
   const totalSteps = 5;
+  const title = STEP_TITLES[step - 1] ?? "New party";
 
   return (
-    <div className="h-full page-scrollable flex flex-col items-center justify-center px-6 py-12 animate-fade-in">
-      <div className="w-full max-w-md">
-        {/* Progress */}
-        <div className="flex gap-2 mb-10">
-          {Array.from({ length: totalSteps }, (_, i) => i + 1).map((s) => (
-            <div
-              key={s}
-              className={`h-1 flex-1 rounded-full transition-colors duration-300 ${
-                s <= step ? "bg-foreground" : "bg-muted"
-              }`}
-            />
-          ))}
-        </div>
+    <div className="animate-fade-in pb-8">
+      <NativeNavBar
+        title={title}
+        onBack={
+          step === 5
+            ? () => navigate(`/dashboard/${eventId}`)
+            : step === 1
+              ? () => navigate("/parties")
+              : () => setStep((s) => s - 1)
+        }
+        backLabel={step === 1 ? "Parties" : "Back"}
+      />
+
+      <div className="w-full max-w-md mx-auto px-6 pt-6">
+        {step < 5 && (
+          <div className="flex gap-2 mb-8">
+            {Array.from({ length: totalSteps - 1 }, (_, i) => i + 1).map((s) => (
+              <div
+                key={s}
+                className={`h-1 flex-1 rounded-full transition-colors duration-300 ${
+                  s <= step ? "bg-foreground" : "bg-muted"
+                }`}
+              />
+            ))}
+          </div>
+        )}
 
         {step === 1 && (
-          <StepOne formData={formData} updateField={updateField} onNext={() => setStep(2)} />
+          <StepOne
+            formData={formData}
+            updateField={updateField}
+            onNext={() => void goNext(2)}
+          />
         )}
         {step === 2 && (
           <StepInvite
             formData={formData}
             updateField={updateField}
-            onBack={() => setStep(1)}
-            onNext={() => setStep(3)}
+            onBack={() => void goNext(1)}
+            onNext={() => void goNext(3)}
           />
         )}
         {step === 3 && (
           <StepTemplate
             formData={formData}
             updateField={updateField}
-            onBack={() => setStep(2)}
-            onNext={() => setStep(4)}
+            onBack={() => void goNext(2)}
+            onNext={() => void goNext(4)}
           />
         )}
         {step === 4 && (
           <StepTwo
             formData={formData}
             updateField={updateField}
-            onBack={() => setStep(3)}
+            onBack={() => void goNext(3)}
             onNext={handleCreate}
             submitting={submitting}
           />

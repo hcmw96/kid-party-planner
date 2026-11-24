@@ -2,9 +2,12 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { CalendarDays, MapPin, Plus, LogOut } from "lucide-react";
+import { LogOut } from "lucide-react";
+import NativeNavBar from "@/components/native/NativeNavBar";
+import { NativeList, NativeListRow } from "@/components/native/NativeList";
+import NativeButton from "@/components/native/NativeButton";
+import { haptic, showActionSheet, isDespia } from "@/lib/despia";
 
 const PartyList = () => {
   const { user, loading: authLoading, signOut } = useAuth();
@@ -30,90 +33,120 @@ const PartyList = () => {
     return null;
   }
 
+  const handleMore = async () => {
+    await haptic("light");
+    if (isDespia) {
+      const value = await showActionSheet({
+        title: "Account",
+        items: [
+          {
+            label: "Sign out",
+            value: "signout",
+            iconIos: "rectangle.portrait.and.arrow.right",
+            iconAndroid: "logout",
+            destructive: true,
+          },
+        ],
+      });
+      if (value === "signout") {
+        await signOut();
+        navigate("/");
+      }
+      return;
+    }
+    await signOut();
+    navigate("/");
+  };
+
   if (authLoading || (user && isLoading)) {
     return (
-      <div className="min-h-screen px-6 py-10 max-w-lg mx-auto space-y-4">
-        <Skeleton className="h-8 w-40" />
-        <Skeleton className="h-20 w-full rounded-lg" />
-        <Skeleton className="h-20 w-full rounded-lg" />
+      <div className="animate-fade-in">
+        <NativeNavBar largeTitle="Parties" />
+        <div className="px-4 pt-4 space-y-3">
+          <Skeleton className="h-14 w-full rounded-xl" />
+          <Skeleton className="h-14 w-full rounded-xl" />
+        </div>
       </div>
     );
   }
 
   if (isError) {
     return (
-      <div className="h-full page-scrollable px-6 py-10 max-w-lg mx-auto space-y-6 animate-fade-in">
-        <span className="text-sm font-serif font-semibold tracking-[0.3em] uppercase text-foreground">
-          PartyPal
-        </span>
-        <div className="text-center py-16 space-y-4">
-          <p className="text-muted-foreground text-sm">
+      <div className="animate-fade-in">
+        <NativeNavBar largeTitle="Parties" />
+        <div className="px-6 py-16 text-center space-y-4">
+          <p className="text-muted-foreground text-sm font-sans">
             Couldn’t load your parties.
           </p>
           <p className="text-xs text-muted-foreground/80 font-sans">
             {error instanceof Error ? error.message : "Something went wrong"}
           </p>
-          <Button onClick={() => refetch()}>Try again</Button>
+          <NativeButton onClick={() => refetch()}>Try again</NativeButton>
         </div>
       </div>
     );
   }
 
-  const handleSignOut = async () => {
-    await signOut();
-    navigate("/");
-  };
-
   return (
-    <div className="h-full page-scrollable px-6 py-10 max-w-lg mx-auto space-y-8 animate-fade-in">
-      <div className="flex items-center justify-between">
-        <span className="text-sm font-serif font-semibold tracking-[0.3em] uppercase text-foreground">
-          PartyPal
-        </span>
-        <Button variant="ghost" size="icon" onClick={handleSignOut}>
-          <LogOut className="h-4 w-4" strokeWidth={1.5} />
-        </Button>
-      </div>
+    <div className="animate-fade-in pb-6">
+      <NativeNavBar
+        largeTitle="Parties"
+        trailing={
+          <button
+            type="button"
+            onClick={handleMore}
+            className="native-btn-plain p-2"
+            aria-label="Account"
+          >
+            <LogOut className="h-5 w-5" strokeWidth={1.75} />
+          </button>
+        }
+      />
 
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-serif italic text-foreground">Your parties</h1>
-          <Button size="sm" onClick={() => navigate("/create")} className="gap-1.5">
-            <Plus className="h-3.5 w-3.5" strokeWidth={2} />
-            New party
-          </Button>
-        </div>
-
+      <div className="pt-4 space-y-6">
         {events.length === 0 ? (
-          <div className="text-center py-16 space-y-4">
-            <p className="text-muted-foreground text-sm">No parties yet.</p>
-            <Button onClick={() => navigate("/create")}>Create your first party</Button>
+          <div className="px-6 py-16 text-center space-y-4">
+            <p className="text-muted-foreground text-[15px] font-sans">
+              No parties yet.
+            </p>
+            <NativeButton
+              onClick={() => navigate("/create")}
+              hapticOnPress="heavy"
+            >
+              Create your first party
+            </NativeButton>
           </div>
         ) : (
-          <div className="space-y-3">
-            {events.map((event) => (
-              <button
-                key={event.id}
-                onClick={() => navigate(`/dashboard/${event.id}`)}
-                className="w-full text-left p-4 rounded-lg border border-border bg-card hover:bg-accent/40 transition-colors"
-              >
-                <p className="font-serif font-semibold text-foreground">{event.child_name}'s Party</p>
-                <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1.5">
-                  <span className="flex items-center gap-1">
-                    <CalendarDays className="h-3 w-3" strokeWidth={1.5} />
-                    {new Date(event.date).toLocaleDateString("en-GB", {
-                      day: "numeric",
-                      month: "short",
-                      year: "numeric",
-                    })}
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <MapPin className="h-3 w-3" strokeWidth={1.5} />
-                    {event.location}
-                  </span>
-                </div>
-              </button>
-            ))}
+          <NativeList>
+            {events.map((event) => {
+              const dateLabel = new Date(event.date).toLocaleDateString("en-GB", {
+                day: "numeric",
+                month: "short",
+                year: "numeric",
+              });
+              return (
+                <NativeListRow
+                  key={event.id}
+                  title={`${event.child_name}'s Party`}
+                  subtitle={`${dateLabel} · ${event.location}`}
+                  onClick={async () => {
+                    await haptic("light");
+                    navigate(`/dashboard/${event.id}`);
+                  }}
+                />
+              );
+            })}
+          </NativeList>
+        )}
+
+        {events.length > 0 && (
+          <div className="px-4">
+            <NativeButton
+              onClick={() => navigate("/create")}
+              hapticOnPress="heavy"
+            >
+              New party
+            </NativeButton>
           </div>
         )}
       </div>

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import type { EventFormData } from "@/pages/CreateEvent";
+import { haptic, showSpinner, hideSpinner } from "@/lib/despia";
 
 interface Props {
   formData: EventFormData;
@@ -56,6 +57,8 @@ const StepInvite = ({ formData, updateField, onBack, onNext }: Props) => {
   const generate = async () => {
     setLoading(true);
     setError(null);
+    await showSpinner();
+    await haptic("light");
     try {
       const { data, error: fnError } = await supabase.functions.invoke(
         "generate-invite",
@@ -77,18 +80,22 @@ const StepInvite = ({ formData, updateField, onBack, onNext }: Props) => {
 
       setOptions(data.options);
       setSelected(null);
+      await haptic("success");
     } catch (err: unknown) {
+      await haptic("error");
       setError(
         err instanceof Error
           ? err.message
           : "Could not generate invitations. Please try again.",
       );
     } finally {
+      await hideSpinner();
       setLoading(false);
     }
   };
 
   const choose = (index: number) => {
+    void haptic("light");
     setSelected(index);
     updateField("description", options[index].text);
   };

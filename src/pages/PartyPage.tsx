@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { useEvent } from "@/hooks/useEvent";
 import { getTemplate } from "@/lib/templates";
@@ -5,10 +6,27 @@ import InvitationCard from "@/components/InvitationCard";
 import RSVPForm from "@/components/RSVPForm";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Gift } from "lucide-react";
+import { setStatusBarTextColor, setStatusBarColor } from "@/lib/despia";
 
 const PartyPage = () => {
   const { eventId } = useParams<{ eventId: string }>();
   const { data: event, isLoading, error } = useEvent(eventId);
+
+  useEffect(() => {
+    if (!event) return;
+    const templateId = (event as { template?: string }).template || "classic_cream";
+    if (templateId === "midnight_disco") {
+      void setStatusBarColor("{26, 31, 60}");
+      void setStatusBarTextColor("white");
+    } else {
+      void setStatusBarColor("{247, 245, 242}");
+      void setStatusBarTextColor("black");
+    }
+    return () => {
+      void setStatusBarColor("{247, 245, 242}");
+      void setStatusBarTextColor("black");
+    };
+  }, [event]);
 
   if (isLoading) {
     return (
