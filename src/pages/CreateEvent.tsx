@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -10,7 +10,7 @@ import StepTwo from "@/components/EventForm/StepTwo";
 import StepThree from "@/components/EventForm/StepThree";
 import NativeNavBar from "@/components/native/NativeNavBar";
 import ProgressDots from "@/components/design/ProgressDots";
-import { emptyEventForm, type EventFormData } from "@/lib/eventForm";
+import { emptyEventForm, personalArtUrl, shelfChoice, type EventFormData } from "@/lib/eventForm";
 import { birthdayTitle, composeDescription, defaultPartyDate, formatUkDate } from "@/lib/party";
 import { clearDraft, loadDraft, saveDraft } from "@/lib/draft";
 import {
@@ -20,12 +20,14 @@ import {
   maybeRequestRatingAfterFirstParty,
 } from "@/lib/despia";
 
-const STEP_LABELS = ["The star", "The day", "The background", "From you"];
+const STEP_LABELS = ["The star", "The day", "The invitation", "From you"];
 
 const CreateEvent = () => {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const scroller = useRef<HTMLDivElement>(null);
+  const gardenRequested = useRef(searchParams.get("style") === "garden");
   const saved = loadDraft();
   const [step, setStep] = useState(saved && saved.step >= 1 && saved.step <= 4 ? saved.step : 1);
   const [submitting, setSubmitting] = useState(false);
@@ -33,6 +35,13 @@ const CreateEvent = () => {
   const [formData, setFormData] = useState<EventFormData>(
     saved?.form ? { ...emptyEventForm(defaultPartyDate()), ...saved.form } : emptyEventForm(defaultPartyDate()),
   );
+
+  useEffect(() => {
+    if (!gardenRequested.current) return;
+    gardenRequested.current = false;
+    setFormData((prev) => ({ ...prev, template: "garden", invitationStyle: "garden" }));
+    if (loadDraft()?.form.childName.trim()) setStep(3);
+  }, []);
 
   useEffect(() => {
     if (step === 5) {
@@ -66,6 +75,8 @@ const CreateEvent = () => {
     await showSpinner();
     await haptic("heavy");
     try {
+      const choice = shelfChoice(formData);
+      const painting = choice === "paint";
       const amountPence = formData.giftEnabled ? Math.round(parseFloat(formData.giftAmount) * 100) : 0;
       const description = composeDescription({
         wording: formData.description,
@@ -86,8 +97,8 @@ const CreateEvent = () => {
           location_lng: formData.locationLng,
           description: description || null,
           organiser_name: formData.organiserName.trim(),
-          template: formData.template,
-          art_url: formData.artUrl,
+          template: painting ? "classic" : choice,
+          art_url: painting ? formData.artUrl : personalArtUrl(formData, choice),
           gift_enabled: formData.giftEnabled,
           gift_amount: amountPence,
         })

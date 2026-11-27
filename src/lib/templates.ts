@@ -142,6 +142,67 @@ export const templates: InvitationTemplate[] = [
     },
     fontFamily: sans,
   },
+  {
+    id: "garden",
+    name: "The Garden",
+    description: "Wildflowers on ivory paper",
+    headline: "A little garden celebration",
+    mood: "An English garden party",
+    palette: {
+      background: "#F7F2E6",
+      card: "#F7F2E6",
+      text: "#243027",
+      accent: "#B85D6C",
+      muted: "#4A433C",
+    },
+    fontFamily: "Fraunces, Palatino, serif",
+  },
+  {
+    id: "poster",
+    name: "Poster",
+    description: "Big type and flat colour",
+    headline: "You're invited",
+    mood: "A printed poster",
+    palette: {
+      background: "#F4F0E8",
+      card: "#F4F0E8",
+      text: "#141414",
+      accent: "#D1234F",
+      muted: "#3A3A3A",
+    },
+    fontFamily: sans,
+  },
+  {
+    id: "midnight",
+    name: "Midnight",
+    description: "Cream type on a dark sky",
+    headline: "After dark",
+    mood: "A late invitation",
+    dark: true,
+    palette: {
+      background: "#10131A",
+      card: "#10131A",
+      text: "#F4EFE4",
+      accent: "#E4C56A",
+      muted: "#C9C0AE",
+    },
+    fontFamily: "Fraunces, Palatino, serif",
+  },
+  {
+    id: "ticket",
+    name: "Ticket",
+    description: "A tear-off admit one",
+    headline: "Admit one",
+    mood: "A party ticket",
+    palette: {
+      background: "#FBF7F0",
+      card: "#FBF7F0",
+      text: "#1A1A1A",
+      accent: "#1A1A1A",
+      muted: "#6B645C",
+    },
+    fontFamily: sans,
+  },
 ];
 
 const aliases: Record<string, string> = {
@@ -154,5 +215,5 @@ const aliases: Record<string, string> = {
 
 export const getTemplate = (id: string): InvitationTemplate => {
   const resolved = aliases[id] ?? id;
-  return templates.find((template) => template.id === resolved) ?? templates[7];
+  return templates.find((template) => template.id === resolved) ?? templates.find((template) => template.id === "classic")!;
 };

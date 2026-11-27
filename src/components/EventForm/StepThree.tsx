@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
-import type { EventFormData } from "@/lib/eventForm";
+import { personalArtUrl, shelfChoice, type EventFormData } from "@/lib/eventForm";
 import { getTemplate } from "@/lib/templates";
 import { ageFromTitle, birthdayTitle, composeDescription, formatPartyDate, splitPartyNotes } from "@/lib/party";
 import { getShareUrl } from "@/lib/shareUrl";
@@ -25,6 +25,7 @@ const StepThree = ({ eventId, formData }: Props) => {
   });
   const { timeLabel, body } = splitPartyNotes(description);
   const title = birthdayTitle(formData.childName, formData.age);
+  const choice = shelfChoice(formData);
   const message = shareMessage({
     childName: formData.childName,
     title,
@@ -59,14 +60,14 @@ const StepThree = ({ eventId, formData }: Props) => {
 
       <div className="overflow-hidden rounded-[24px] shadow-[0_16px_40px_rgba(40,32,53,0.08)]">
         <InvitationCard
-          template={getTemplate(formData.template)}
+          template={getTemplate(choice === "paint" ? "classic" : choice)}
           childName={formData.childName}
           age={ageFromTitle(title)}
           dateLabel={formatPartyDate(formData.date)}
           timeLabel={timeLabel}
           location={formData.location}
           note={body}
-          artUrl={formData.artUrl}
+          artUrl={choice === "paint" ? formData.artUrl : personalArtUrl(formData, choice)}
           variant="poster"
         />
       </div>

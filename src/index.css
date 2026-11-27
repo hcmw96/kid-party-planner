@@ -459,7 +459,225 @@
   .paint-mote,
   .paint-line,
   .motion-safe\:animate-float,
-  .motion-safe\:animate-confetti {
+  .motion-safe\:animate-confetti,
+  .garden-drift,
+  .garden-rise,
+  .garden-petal {
     animation: none !important;
   }
+
+  .card-rail {
+    scroll-behavior: auto;
+  }
+}
+
+/* Example garden invitation. Scoped so real invitations keep their own type. */
+.garden-serif {
+  font-family: Fraunces, "Iowan Old Style", Palatino, "Palatino Linotype", serif;
+  font-optical-sizing: auto;
+}
+
+.garden-kicker {
+  font-family: Fraunces, Palatino, serif;
+  font-style: italic;
+  font-weight: 500;
+  font-size: 1.05rem;
+  line-height: 1.25;
+  color: var(--invite-kicker, #44523a);
+}
+
+.garden-name {
+  margin-top: 0.15rem;
+  font-family: Fraunces, Palatino, serif;
+  font-weight: 600;
+  font-size: 3.05rem;
+  line-height: 0.9;
+  letter-spacing: -0.03em;
+  color: var(--invite-ink, #243027);
+}
+
+.garden-turning {
+  margin-top: 0.1rem;
+  font-family: Fraunces, Palatino, serif;
+  font-style: italic;
+  font-weight: 500;
+  font-size: 1.2rem;
+  color: var(--invite-soft, #4d5646);
+}
+
+.garden-six {
+  position: relative;
+  z-index: 1;
+  display: block;
+  font-family: Fraunces, Palatino, serif;
+  font-weight: 500;
+  font-size: 7rem;
+  line-height: 0.74;
+  letter-spacing: -0.05em;
+  color: var(--invite-age, #b85d6c);
+}
+
+.garden-six-wide {
+  font-size: 5.6rem;
+}
+
+.garden-butterfly,
+.garden-sprig {
+  pointer-events: none;
+  user-select: none;
+}
+
+.garden-butterfly {
+  -webkit-mask-image: radial-gradient(circle, #000 48%, transparent 72%);
+  mask-image: radial-gradient(circle, #000 48%, transparent 72%);
+}
+
+.garden-sprig {
+  -webkit-mask-image: radial-gradient(circle at 34% 62%, #000 42%, transparent 72%);
+  mask-image: radial-gradient(circle at 34% 62%, #000 42%, transparent 72%);
+}
+
+@keyframes garden-drift {
+  0%, 100% { transform: translateY(0) rotate(-7deg); }
+  50% { transform: translateY(-7px) rotate(4deg); }
+}
+
+.garden-drift {
+  animation: garden-drift 7.5s ease-in-out infinite;
+}
+
+.garden-rise {
+  animation: rise 0.55s ease both;
+}
+
+@keyframes garden-petal {
+  0% { opacity: 0; transform: translateY(-6px) rotate(0deg); }
+  18% { opacity: 0.85; }
+  100% { opacity: 0; transform: translateY(42px) rotate(16deg); }
+}
+
+.garden-petal {
+  position: absolute;
+  width: 7px;
+  height: 11px;
+  border-radius: 70% 30% 70% 30%;
+  animation: garden-petal 1.6s ease-out both;
+}
+
+.garden-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 52px;
+  width: 100%;
+  border-radius: 999px;
+  padding: 0.75rem 1rem;
+  font-family: Fraunces, Palatino, serif;
+  font-size: 1.125rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  text-align: center;
+  transition: transform 0.15s ease, background 0.15s ease;
+}
+
+.garden-btn:active:not(:disabled) {
+  transform: scale(0.985);
+}
+
+.garden-btn:disabled {
+  opacity: 0.55;
+}
+
+.garden-btn-primary {
+  background: #3e5344;
+  color: #fbf6eb;
+}
+
+.garden-btn-primary:hover {
+  background: #314536;
+}
+
+.garden-btn-quiet {
+  background: transparent;
+  color: #243027;
+  box-shadow: inset 0 0 0 1.5px #cbbfa8;
+}
+
+.garden-field {
+  width: 100%;
+  min-height: 52px;
+  border: 0;
+  border-radius: 16px;
+  background: #fffdf8;
+  box-shadow: inset 0 0 0 1px #e4d8c4;
+  padding: 0 16px;
+  font-size: 16px;
+  color: #243027;
+}
+
+textarea.garden-field {
+  min-height: 96px;
+  padding: 14px 16px;
+  resize: vertical;
+}
+
+.garden-field:focus {
+  outline: 2px solid #3e5344;
+  outline-offset: 2px;
+}
+
+.garden-page :focus-visible {
+  outline: 2px solid #3e5344;
+  outline-offset: 3px;
+}
+
+.card-rail {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scroll-padding-inline: 20px;
+  padding: 4px 20px 8px;
+  touch-action: pan-x;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+}
+
+.card-rail::-webkit-scrollbar {
+  display: none;
+}
+
+.card-rail-item {
+  scroll-snap-align: start;
+  flex: 0 0 150px;
+  appearance: none;
+  background: transparent;
+  border: 0;
+  padding: 0;
+  text-align: center;
+  color: inherit;
+}
+
+.card-rail-face {
+  position: relative;
+  display: block;
+  height: 200px;
+  overflow: hidden;
+  border-radius: 18px;
+  background: #f4f0e8;
+  box-shadow: 0 8px 20px rgba(40, 32, 53, 0.08);
+}
+
+.card-rail-item[aria-pressed="true"] .card-rail-face {
+  box-shadow: 0 0 0 2px #141414, 0 10px 24px rgba(40, 32, 53, 0.12);
+}
+
+.card-rail-label {
+  display: block;
+  margin-top: 0.55rem;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
 }

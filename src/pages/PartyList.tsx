@@ -86,6 +86,9 @@ const PartyList = () => {
           <button type="button" className="ink-button" onClick={() => refetch()}>
             Try again
           </button>
+          <button type="button" className="soft-button" onClick={() => navigate("/")}>
+            Home
+          </button>
         </div>
       </div>
     );

@@ -21,6 +21,9 @@ type ArtInput = {
   inspiration?: string;
   film?: string;
   partyType?: string;
+  /** When set, paint a finished card with these words on it. */
+  layout?: string;
+  lines?: string[];
 };
 
 type ArtDirection = {
@@ -60,6 +63,86 @@ function neutraliseProperNouns(value: string): string {
     .replace(/\b(featuring|starring|about)\b/gi, "")
     .replace(/\s+/g, " ")
     .trim();
+}
+
+const letteredLayouts = new Set(["ticket", "poster", "midnight"]);
+
+function letteredPrompt(layout: string, lines: string[]): string {
+  const text = lines.map((line) => line.trim()).filter(Boolean).slice(0, 6).join("\n");
+  const exact = `Render only these words, each on its own line, spelled exactly as written, with no other words, letters or numbers anywhere in the image:\n${text}`;
+  if (layout === "ticket") {
+    return `A portrait birthday invitation that is itself a cream letterpress ticket, seen straight on and filling the frame. Visible paper fibre, a perforated stub down the right side, one small empty circular stamp. The words are printed on the ticket in black engraved type. They are not written underneath the ticket. Warm charcoal and pale gold. No people, no scenery, no extra decoration covering the words. ${exact}`;
+  }
+  if (layout === "poster") {
+    return `A portrait screen-printed party poster filling the frame. Flat shapes in coral red, butter yellow and cobalt blue on warm cream, with one large cream circle. The words are part of the poster, in heavy type, sitting in the colour field. No people, no characters, no skateboards. ${exact}`;
+  }
+  return `A portrait invitation of a deep black night sky filling the frame. One large elegant gold crescent moon and a few small gold stars in the upper third. The words sit in the lower half in cream serif type. No flowers, no people, no extra captions. ${exact}`;
+}
+
+async function paintAndStore(prompt: string, caption: string) {
+  const imageRes = await fetch("https://api.openai.com/v1/images/generations", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${OPENAI_API_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model: IMAGE_MODEL,
+      prompt,
+      n: 1,
+      size: "1024x1536",
+      quality: "medium",
+      output_format: "png",
+    }),
+  });
+
+  const imageRaw = await imageRes.text();
+  if (!imageRes.ok) {
+    console.error("OpenAI image error", imageRes.status, imageRaw);
+    return jsonResponse(
+      { error: readableApiError(imageRes.status, imageRaw) },
+      imageRes.status >= 500 ? 502 : imageRes.status,
+    );
+  }
+
+  const imagePayload = JSON.parse(imageRaw) as {
+    data?: Array<{ b64_json?: string }>;
+  };
+  const b64 = imagePayload.data?.[0]?.b64_json;
+  if (!b64) {
+    return jsonResponse({ error: "Image model returned no image data." }, 502);
+  }
+
+  const bytes = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
+  const path = `${crypto.randomUUID()}.png`;
+  const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+  const { error: uploadError } = await supabase.storage
+    .from("invite-art")
+    .upload(path, bytes, {
+      contentType: "image/png",
+      upsert: false,
+    });
+
+  if (uploadError) {
+    console.error("Storage upload error", uploadError);
+    return jsonResponse(
+      { error: `Couldn’t save artwork: ${uploadError.message}` },
+      500,
+    );
+  }
+
+  const { data: publicData } = supabase.storage.from("invite-art").getPublicUrl(path);
+  return jsonResponse({
+    art_url: publicData.publicUrl,
+    art_path: path,
+    art_direction: {
+      palette: "",
+      motifs: "",
+      mood: "",
+      caption,
+      image_prompt: prompt,
+    },
+  });
 }
 
 function jsonResponse(body: unknown, status = 200) {
@@ -125,6 +208,19 @@ serve(async (req) => {
 
     const body = (await req.json()) as ArtInput;
     const childName = (body.childName ?? "").trim();
+    const layout = (body.layout ?? "").trim();
+    if (letteredLayouts.has(layout)) {
+      if (!childName) {
+        return jsonResponse({ error: "A name is required." }, 400);
+      }
+      const lines = Array.isArray(body.lines) ? body.lines.filter((line) => typeof line === "string") : [];
+      if (!lines.some((line) => line.trim())) {
+        return jsonResponse({ error: "The invitation needs a few words to letter." }, 400);
+      }
+      const caption = layout === "ticket" ? "Their ticket" : layout === "poster" ? "Their poster" : "Their midnight card";
+      return await paintAndStore(letteredPrompt(layout, lines), caption);
+    }
+
     const age = String(body.age ?? "").trim();
     const years = yearsOld(age);
     const look = ageLook(years);
@@ -222,72 +318,7 @@ Compose the scene around the words that will be placed on the lower third: the c
       "No text, letters or numbers anywhere in the image.",
     ].join(" ");
 
-    // --- Pass 2: image generation ---
-    const imageRes = await fetch("https://api.openai.com/v1/images/generations", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${OPENAI_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: IMAGE_MODEL,
-        prompt: safeImagePrompt,
-        n: 1,
-        size: "1024x1536",
-        quality: "medium",
-        output_format: "png",
-      }),
-    });
-
-    const imageRaw = await imageRes.text();
-    if (!imageRes.ok) {
-      console.error("OpenAI image error", imageRes.status, imageRaw);
-      return jsonResponse(
-        { error: readableApiError(imageRes.status, imageRaw) },
-        imageRes.status >= 500 ? 502 : imageRes.status,
-      );
-    }
-
-    const imagePayload = JSON.parse(imageRaw) as {
-      data?: Array<{ b64_json?: string; url?: string }>;
-    };
-    const b64 = imagePayload.data?.[0]?.b64_json;
-    if (!b64) {
-      return jsonResponse({ error: "Image model returned no image data." }, 502);
-    }
-
-    const bytes = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
-    const path = `${crypto.randomUUID()}.png`;
-    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
-    const { error: uploadError } = await supabase.storage
-      .from("invite-art")
-      .upload(path, bytes, {
-        contentType: "image/png",
-        upsert: false,
-      });
-
-    if (uploadError) {
-      console.error("Storage upload error", uploadError);
-      return jsonResponse(
-        { error: `Couldn’t save artwork: ${uploadError.message}` },
-        500,
-      );
-    }
-
-    const { data: publicData } = supabase.storage.from("invite-art").getPublicUrl(path);
-    const artUrl = publicData.publicUrl;
-
-    return jsonResponse({
-      art_url: artUrl,
-      art_path: path,
-      art_direction: {
-        palette: direction.palette ?? "",
-        motifs: direction.motifs ?? "",
-        mood: direction.mood ?? "",
-        caption: direction.caption ?? "Custom artwork",
-        image_prompt: direction.imagePrompt,
-      },
-    });
+    return await paintAndStore(safeImagePrompt, direction.caption ?? "Custom artwork");
   } catch (err) {
     console.error(err);
     return jsonResponse(

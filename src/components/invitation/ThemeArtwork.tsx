@@ -108,18 +108,9 @@ function SeaArt() {
 function ClassicArt() {
   return (
     <div className={frame} aria-hidden>
-      <div
-        className="absolute inset-0"
-        style={{
-          background:
-            "radial-gradient(circle at 50% 70%, rgba(243,74,165,0.22), transparent 42%), radial-gradient(circle at 42% 36%, rgba(107,122,255,0.28), transparent 46%), #F9F7FC",
-        }}
-      />
-      <img
-        src={balloon}
-        alt=""
-        className="absolute left-1/2 top-[54%] h-36 w-36 -translate-x-1/2 -translate-y-1/2 object-contain motion-safe:animate-float"
-      />
+      <div className="absolute left-1/2 top-1/2 h-40 w-40 -translate-x-1/2 -translate-y-1/2">
+        <img src={balloon} alt="" className="h-full w-full object-contain motion-safe:animate-float" />
+      </div>
     </div>
   );
 }

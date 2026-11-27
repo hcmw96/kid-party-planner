@@ -84,8 +84,9 @@ const Dashboard = () => {
 
   if (!event || event.organiser_id !== user.id) {
     return (
-      <div className="flex min-h-[50vh] items-center justify-center px-6 text-center text-[#71677F]">
-        This party belongs to someone else.
+      <div>
+        <NativeNavBar title="Party" onBack={() => navigate("/parties")} backLabel="Parties" />
+        <p className="px-6 pt-16 text-center text-[15px] text-[#71677F]">This party belongs to someone else.</p>
       </div>
     );
   }
@@ -332,6 +333,7 @@ const Dashboard = () => {
             dateLabel={formatPartyDate(event.date)}
             timeLabel={timeLabel}
             location={event.location}
+            note={body}
             artUrl={artUrl}
             variant="poster"
           />

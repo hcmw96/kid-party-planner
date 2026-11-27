@@ -1,7 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { getTemplate } from "@/lib/templates";
-import type { EventFormData } from "@/lib/eventForm";
+import yoursArt from "@/assets/card-yours.jpg";
+import { artKey, isLetteredStyle, personalArtUrl, shelfChoice, type EventFormData } from "@/lib/eventForm";
+import PresetShelf from "@/components/EventForm/PresetShelf";
 import { haptic, showSpinner, hideSpinner } from "@/lib/despia";
 import InvitationCard from "@/components/InvitationCard";
 import { Field, FieldArea, FieldError } from "@/components/design/Field";
@@ -35,7 +37,12 @@ const StepTemplate = ({ formData, updateField, onNext }: Props) => {
   const [writing, setWriting] = useState(false);
   const [painting, setPainting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const promptsReady = Boolean(formData.inspiration.trim());
+  const style = shelfChoice(formData);
+  const paintingChoice = style === "paint";
+  const promptsReady = !paintingChoice || Boolean(formData.inspiration.trim());
+  const artStore = useRef(formData.personalArt ?? {});
+  artStore.current = formData.personalArt ?? {};
+  const request = useRef(0);
 
   const generateWording = async () => {
     setWriting(true);
@@ -88,12 +95,43 @@ const StepTemplate = ({ formData, updateField, onNext }: Props) => {
       if (!data?.art_url) throw new Error("No artwork came back.");
       updateField("artUrl", data.art_url);
       updateField("template", "classic");
+      updateField("invitationStyle", "paint");
       await haptic("success");
     } catch (err: unknown) {
       await haptic("error");
       setError(err instanceof Error ? err.message : "Could not paint a background.");
     } finally {
       setPainting(false);
+    }
+  };
+
+  const generateStyle = async (id: string, key: string) => {
+    const seq = ++request.current;
+    setPainting(true);
+    setError(null);
+    try {
+      const { data, error: fnError } = await supabase.functions.invoke("generate-invite-art", {
+        body: {
+          layout: id,
+          childName: formData.childName.trim() || "The birthday star",
+          age: formData.age,
+          lines: invitationLines(formData),
+        },
+      });
+      if (seq !== request.current) return;
+      if (fnError) throw new Error(await readFunctionError(fnError));
+      if (data?.error) throw new Error(data.error);
+      if (!data?.art_url) throw new Error("No artwork came back.");
+      const next = { ...artStore.current, [id]: { key, url: data.art_url } };
+      artStore.current = next;
+      updateField("personalArt", next);
+      await haptic("success");
+    } catch (err: unknown) {
+      if (seq !== request.current) return;
+      await haptic("error");
+      setError(err instanceof Error ? err.message : "Could not paint the card.");
+    } finally {
+      if (seq === request.current) setPainting(false);
     }
   };
 
@@ -104,10 +142,27 @@ const StepTemplate = ({ formData, updateField, onNext }: Props) => {
           Make it theirs
         </h2>
         <p className="mt-2 text-[15px] leading-relaxed text-[#71677F]">
-          One thing they love, and we'll paint a background just for {formData.childName || "them"}.
+          Choose a card and we’ll paint their day onto it. Or generate one from what they love.
         </p>
       </div>
 
+      <PresetShelf
+        formData={formData}
+        selected={style}
+        painting={painting}
+        onSelect={(id) => {
+          void haptic("light");
+          updateField("invitationStyle", id);
+          updateField("template", id === "paint" ? "classic" : id);
+          if (!isLetteredStyle(id)) return;
+          const key = artKey(formData, id);
+          const cached = formData.personalArt?.[id];
+          if (id !== style && cached?.key === key) return;
+          void generateStyle(id, key);
+        }}
+      />
+
+      {paintingChoice ? (
       <Field
         label="Something they love"
         name="inspiration"
@@ -115,12 +170,15 @@ const StepTemplate = ({ formData, updateField, onNext }: Props) => {
         onChange={(event) => updateField("inspiration", event.target.value)}
         placeholder="A favourite film, a dream job, or a sport"
       />
+      ) : null}
 
       {error ? <FieldError>{error}</FieldError> : null}
 
+      {paintingChoice ? (
       <button type="button" className="ink-button" onClick={() => void generateArt()} disabled={!promptsReady || painting}>
-        {painting ? "Painting…" : formData.artUrl ? "Paint another" : "Paint the background"}
+        {painting ? "Generating…" : formData.artUrl ? "Generate another" : "Generate the invitation"}
       </button>
+      ) : null}
 
       <LivePreview formData={formData} painting={painting} />
 
@@ -149,26 +207,52 @@ const StepTemplate = ({ formData, updateField, onNext }: Props) => {
             <p className="mt-1 text-[15px] leading-relaxed text-[#282035]">{option.text}</p>
           </button>
         ))}
-        {formData.description ? (
-          <FieldArea
-            label="Edit the wording"
-            name="description"
-            rows={4}
-            value={formData.description}
-            onChange={(event) => updateField("description", event.target.value)}
-          />
-        ) : null}
+        <FieldArea
+          label="Words on the invitation"
+          name="description"
+          rows={4}
+          value={formData.description}
+          onChange={(event) => updateField("description", event.target.value)}
+          placeholder="Cake, games, and a line just for them."
+        />
       </div>
 
-      <button type="button" className="soft-button" onClick={onNext}>
-        {formData.artUrl ? "Continue" : "Continue without a painting"}
+      <button type="button" className="soft-button" onClick={onNext} disabled={painting}>
+        {painting ? "Painting the card…" : !paintingChoice || formData.artUrl ? "Continue" : "Continue without generating"}
       </button>
     </div>
   );
 };
 
-const paintLines = (name: string, love: string) => {
+const invitationLines = (form: EventFormData) => {
+  const description = composeDescription({
+    wording: form.description,
+    notes: form.notes,
+    start: form.startTime,
+    end: form.endTime,
+  });
+  const { timeLabel, body } = splitPartyNotes(description);
+  const sentence = body.trim();
+  return [
+    form.childName.trim() || "The birthday star",
+    form.age.trim() ? `Turns ${form.age.trim()}` : "",
+    form.date ? formatPartyDate(form.date) : "",
+    timeLabel ?? "",
+    form.location.trim(),
+    sentence.length > 0 && sentence.length <= 90 ? sentence : "",
+  ].filter(Boolean);
+};
+
+const paintLines = (name: string, love: string, subject?: string) => {
   const who = name.trim() || "them";
+  if (subject) {
+    return [
+      `Lettering ${who}'s ${subject}`,
+      "Putting the day on the card",
+      "Keeping the place just so",
+      "The invitation is nearly here",
+    ];
+  }
   const thing = love.trim();
   const loved = thing ? thing.charAt(0).toLowerCase() + thing.slice(1) : "";
   return [
@@ -188,8 +272,8 @@ const motes = [
   { left: "88%", delay: "2.1s", size: "5px", color: "#fff" },
 ];
 
-const PaintVeil = ({ name, love }: { name: string; love: string }) => {
-  const lines = paintLines(name, love);
+const PaintVeil = ({ name, love, subject }: { name: string; love: string; subject?: string }) => {
+  const lines = paintLines(name, love, subject);
   const [line, setLine] = useState(0);
 
   useEffect(() => {
@@ -221,6 +305,8 @@ const PaintVeil = ({ name, love }: { name: string; love: string }) => {
   );
 };
 
+const styleSubject = (id: string) => (id === "ticket" ? "ticket" : id === "poster" ? "poster" : "card");
+
 const LivePreview = ({ formData, painting }: { formData: EventFormData; painting: boolean }) => {
   const description = composeDescription({
     wording: formData.description,
@@ -230,21 +316,49 @@ const LivePreview = ({ formData, painting }: { formData: EventFormData; painting
   });
   const { timeLabel, body } = splitPartyNotes(description);
   const title = birthdayTitle(formData.childName, formData.age);
+  const choice = shelfChoice(formData);
+  const paintingChoice = choice === "paint";
+  const waitingToPaint = paintingChoice && !formData.artUrl;
+  const personal = paintingChoice ? null : personalArtUrl(formData, choice);
+  const lettering = painting && isLetteredStyle(choice) && !personal;
 
   return (
     <div className="relative overflow-hidden rounded-[24px] shadow-[0_16px_40px_rgba(40,32,53,0.08)]">
-      <InvitationCard
-        template={getTemplate("classic")}
-        childName={formData.childName}
-        age={ageFromTitle(title)}
-        dateLabel={formData.date ? formatPartyDate(formData.date) : "Pick a date"}
-        timeLabel={timeLabel}
-        location={formData.location}
-        note={body}
-        artUrl={formData.artUrl}
-        variant="poster"
-      />
-      {painting ? <PaintVeil name={formData.childName} love={formData.inspiration} /> : null}
+      {lettering ? (
+        <div className={`min-h-[34rem] ${choice === "midnight" ? "bg-[#10131A]" : choice === "poster" ? "bg-[#0E4DA7]" : "bg-[#E7DCC8]"}`} />
+      ) : waitingToPaint ? (
+        <div className="relative min-h-[320px] overflow-hidden text-[#1A1408]">
+          <img src={yoursArt} alt="" className="absolute inset-0 h-full w-full object-cover" />
+          <div className="relative flex min-h-[320px] flex-col items-center justify-center px-7 text-center">
+            <p className="text-[12px] font-extrabold uppercase tracking-[0.2em] text-[#1A1408]/70">Generate</p>
+            <p className="mt-2 text-[2.6rem] font-extrabold leading-[0.9] tracking-[-0.045em]">Make theirs</p>
+            <p className="mt-3 max-w-[16rem] text-[15px] leading-relaxed text-[#1A1408]/75">
+              {formData.inspiration.trim()
+                ? `Ready to paint it from ${formData.inspiration.trim()}.`
+                : "Tell us one thing they love, and we’ll paint the invitation."}
+            </p>
+          </div>
+        </div>
+      ) : (
+        <InvitationCard
+          template={getTemplate(paintingChoice ? "classic" : choice)}
+          childName={formData.childName}
+          age={ageFromTitle(title)}
+          dateLabel={formData.date ? formatPartyDate(formData.date) : "Pick a date"}
+          timeLabel={timeLabel}
+          location={formData.location}
+          note={body}
+          artUrl={paintingChoice ? formData.artUrl : personal}
+          variant="poster"
+        />
+      )}
+      {painting ? (
+        <PaintVeil
+          name={formData.childName}
+          love={formData.inspiration}
+          subject={isLetteredStyle(choice) ? styleSubject(choice) : undefined}
+        />
+      ) : null}
     </div>
   );
 };

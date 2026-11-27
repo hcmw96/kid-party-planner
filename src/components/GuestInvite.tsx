@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { ChevronLeft } from "lucide-react";
 import type { Tables } from "@/integrations/supabase/types";
 import { getTemplate } from "@/lib/templates";
 import { ageFromTitle, formatPartyDate, splitPartyNotes } from "@/lib/party";
@@ -9,9 +10,11 @@ import RSVPForm from "@/components/RSVPForm";
 interface Props {
   event: Tables<"events">;
   demo?: boolean;
+  onBack?: () => void;
+  backLabel?: string;
 }
 
-const GuestInvite = ({ event, demo = false }: Props) => {
+const GuestInvite = ({ event, demo = false, onBack, backLabel = "Back" }: Props) => {
   const template = getTemplate(event.template || "classic");
   const { timeLabel, body } = splitPartyNotes(event.description);
   const showGift = event.gift_enabled && event.gift_amount && event.gift_amount > 0;
@@ -33,8 +36,20 @@ const GuestInvite = ({ event, demo = false }: Props) => {
   return (
     <div className="min-h-full bg-[#F9F7FC]">
       <div className="min-h-full w-full bg-[#F9F7FC]">
+        {onBack ? (
+          <div className="px-3 pt-2">
+            <button
+              type="button"
+              onClick={onBack}
+              className="inline-flex items-center gap-0.5 text-[17px] text-[#282035]"
+            >
+              <ChevronLeft className="h-6 w-6" strokeWidth={2} />
+              {backLabel}
+            </button>
+          </div>
+        ) : null}
         {demo ? (
-          <p className="px-6 pt-4 text-center text-[13px] font-medium text-[#71677F]">
+          <p className="px-6 pt-3 text-center text-[13px] font-medium text-[#71677F]">
             An example party, so you can try the invitation.
           </p>
         ) : null}

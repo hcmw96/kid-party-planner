@@ -1,5 +1,10 @@
 import type { InvitationTemplate } from "@/lib/templates";
 import ThemeArtwork from "@/components/invitation/ThemeArtwork";
+import GardenCard from "@/components/invitation/GardenCard";
+import PosterCard from "@/components/invitation/PosterCard";
+import MidnightCard from "@/components/invitation/MidnightCard";
+import TicketCard from "@/components/invitation/TicketCard";
+import { isStationery } from "@/lib/stationery";
 import balloonIcon from "@/assets/balloon-icon.png";
 
 interface Props {
@@ -30,57 +35,46 @@ const InvitationCard = ({
   const name = childName.trim() || "The birthday star";
   const poster = variant === "poster";
   const when = [dateLabel, timeLabel].filter(Boolean).join(" · ");
+  const parts = (note ?? "").split(/\n\n/).map((part) => part.trim()).filter(Boolean);
+  const aside = parts.length > 1 ? parts[0] : "";
+  const message = parts.length > 1 ? parts.slice(1).join("\n\n") : (parts[0] ?? "");
+
+  if ((template.id === "poster" || template.id === "midnight" || template.id === "ticket") && artUrl) {
+    return (
+      <article className="overflow-hidden">
+        <img src={artUrl} alt="" className="block w-full" />
+      </article>
+    );
+  }
+
+  if (template.id === "poster" || template.id === "midnight" || template.id === "ticket" || isStationery(template.id)) {
+    const shared = { childName: name, age, dateLabel, timeLabel, location, message, note: aside };
+    if (template.id === "poster") return <PosterCard {...shared} />;
+    if (template.id === "midnight") return <MidnightCard {...shared} />;
+    if (template.id === "ticket") return <TicketCard {...shared} />;
+    return <GardenCard preset={template.id} kicker={template.headline} {...shared} />;
+  }
 
   if (artUrl) {
     return (
-      <article className="relative w-full max-w-full overflow-hidden text-white">
-        <img src={artUrl} alt="" className="absolute inset-0 h-full w-full max-w-full object-cover object-[center_18%]" />
-        <div className="absolute inset-0 bg-[linear-gradient(to_bottom,rgba(12,10,16,0.08)_0%,rgba(12,10,16,0.02)_34%,rgba(12,10,16,0.45)_62%,rgba(12,10,16,0.78)_100%)]" />
-        <div
-          className={`relative flex flex-col justify-end text-center ${
-            poster ? "min-h-[34rem] px-6 pb-8 pt-28" : "min-h-[42rem] px-7 pb-9 pt-32"
-          }`}
-          style={{ textShadow: "0 2px 18px rgba(0,0,0,0.35)" }}
-        >
-          <p className="text-[12px] font-semibold uppercase tracking-[0.2em] text-white/75">
-            {template.headline}
-          </p>
-          <h1 className="mt-3 text-[3.1rem] font-extrabold leading-[0.92] tracking-[-0.045em] text-white">
-            {name}
-          </h1>
-          <p className="mt-2 text-[1.35rem] font-medium tracking-[-0.02em] text-white/90">
-            {age ? `is turning ${age}` : "is having a birthday"}
-          </p>
-          <dl className="mt-5 space-y-1 text-[15px] text-white/80">
-            <div>
-              <dt className="sr-only">When</dt>
-              <dd>{when}</dd>
-            </div>
-            <div>
-              <dt className="sr-only">Where</dt>
-              <dd>{location || "Somewhere lovely"}</dd>
-            </div>
-          </dl>
-          {!poster && note ? (
-            <p className="mx-auto mt-5 max-w-xs whitespace-pre-line text-[15px] leading-relaxed text-white/90">
-              {note}
-            </p>
+      <article className="overflow-hidden bg-[#F6F3EE] text-[#141414]">
+        <img src={artUrl} alt="" className="h-[280px] w-full object-cover object-[center_12%]" />
+        <div className={`px-6 ${poster ? "pb-7 pt-5" : "pb-8 pt-5"}`}>
+          {template.id !== "classic" ? (
+            <p className="mb-2 text-[12px] font-extrabold uppercase tracking-[0.2em] text-[#6B645C]">{template.headline}</p>
           ) : null}
+          <h1 className="text-[3.1rem] font-extrabold leading-[0.9] tracking-[-0.05em]">{name}</h1>
+          <p className="mt-2 text-[1.25rem] font-semibold tracking-[-0.02em]">{age ? `is turning ${age}` : "is having a birthday"}</p>
+          {message ? <p className="mt-4 max-w-[18rem] whitespace-pre-line text-[15px] leading-relaxed text-[#3f3a34]">{message}</p> : null}
+          <div className="mt-5 space-y-1 text-[15px] font-semibold">
+            <p>{when}</p>
+            <p className="font-medium text-[#3f3a34]">{location || "Somewhere lovely"}</p>
+          </div>
+          {aside ? <p className="mt-4 whitespace-pre-line text-[14px] leading-relaxed text-[#3f3a34]">{aside}</p> : null}
           {!poster && onRsvp ? (
-            <button
-              type="button"
-              onClick={onRsvp}
-              className="mt-7 w-full rounded-[18px] bg-white py-3.5 text-[16px] font-bold tracking-[-0.02em] text-[#282035]"
-              style={{ textShadow: "none" }}
-            >
+            <button type="button" onClick={onRsvp} className="ink-button mt-7">
               Can you come?
             </button>
-          ) : null}
-          {!poster ? (
-            <p className="mt-6 inline-flex items-center justify-center gap-1.5 text-[12px] font-semibold tracking-[-0.01em] text-white/70">
-              <img src={balloonIcon} alt="" className="h-6 w-6 rounded-[22%] object-cover" />
-              PartyPal
-            </p>
           ) : null}
         </div>
       </article>

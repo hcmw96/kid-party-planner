@@ -1,10 +1,13 @@
-import { useParams } from "react-router-dom";
+import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { useEvent } from "@/hooks/useEvent";
 import GuestInvite from "@/components/GuestInvite";
 
 const PartyPage = () => {
   const { eventId } = useParams<{ eventId: string }>();
+  const location = useLocation();
+  const navigate = useNavigate();
   const { data: event, isLoading, error } = useEvent(eventId);
+  const cameFromApp = location.key !== "default";
 
   if (isLoading) {
     return (
@@ -24,6 +27,9 @@ const PartyPage = () => {
         <div>
           <p className="text-[1.4rem] font-extrabold tracking-[-0.04em] text-[#282035]">We can't find that party</p>
           <p className="mt-2 text-[15px] text-[#71677F]">The link may have been mistyped.</p>
+          <Link to="/" className="ink-button mt-8">
+            Back to PartyPal
+          </Link>
         </div>
       </div>
     );
@@ -31,7 +37,7 @@ const PartyPage = () => {
 
   return (
     <div className="page-scrollable h-full bg-[#F9F7FC]">
-      <GuestInvite event={event} />
+      <GuestInvite event={event} onBack={cameFromApp ? () => navigate(-1) : undefined} />
     </div>
   );
 };
